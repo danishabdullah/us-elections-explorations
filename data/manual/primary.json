@@ -1,0 +1,23 @@
+{
+ "_about": "Primary collection for contests MEDSL doesn't cover. 2026: the official state feed (passA) where one was published (NC, MN, NE, SC), else the AP feed (passB); both checked against the other pass and DDHQ (passC). Own earlier races: passB (Clerk of the House / NC certified canvass) because passA reached some state files only via archive copies.",
+ "contests": {
+  "2026-sen-AK-2-gen": "passB",
+  "2026-sen-FL-3-special-gen": "passB",
+  "2026-sen-GA-2-gen": "passB",
+  "2026-sen-IA-2-gen": "passB",
+  "2026-sen-KS-2-gen": "passB",
+  "2026-sen-MA-2-gen": "passB",
+  "2026-sen-ME-2-gen": "passB",
+  "2026-sen-MI-2-gen": "passB",
+  "2026-sen-MN-2-gen": "passA",
+  "2026-sen-MS-2-gen": "passB",
+  "2026-sen-NC-2-gen": "passA",
+  "2026-sen-NE-2-gen": "passA",
+  "2026-sen-NH-2-gen": "passB",
+  "2026-sen-OH-3-special-gen": "passB",
+  "2026-sen-SC-2-gen": "passA",
+  "2026-sen-TX-2-gen": "passB",
+  "2024-house-AK-00-gen": "passB",
+  "2020-gov-NC-gen": "passB"
+ }
+}

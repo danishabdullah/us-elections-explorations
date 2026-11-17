@@ -1,0 +1,10 @@
+{
+  "_about": "Party labels missing from MEDSL rows for leading candidates. Applied at parse time; the original party_detailed stays in the database. Rows whose party_detailed begins with DEMOCRAT or REPUBLICAN (e.g. 'REPUBLICAN (NOT IDENTIFIED ON BALLOT)', 'DEMOCRATIC') are relabelled by rule in sources/medsl.py and need no entry here.",
+  "party": [
+    {"office": "sen", "state": "WY", "year": 2020, "candidate": "CYNTHIA M. LUMMIS", "party_simplified": "REPUBLICAN"},
+    {"office": "sen", "state": "WY", "year": 2020, "candidate": "MERAV BEN DAVID", "party_simplified": "DEMOCRAT"},
+    {"office": "sen", "state": "AK", "year": 2010, "candidate": "LISA MURKOWSKI", "party_simplified": "REPUBLICAN", "note": "won as a write-in after losing the Republican primary"},
+    {"office": "sen", "state": "AK", "year": 2022, "candidate": "MURKOWSKI, LISA", "party_simplified": "REPUBLICAN"},
+    {"office": "sen", "state": "AK", "year": 2022, "candidate": "TSHIBAKA, KELLY C.", "party_simplified": "REPUBLICAN"}
+  ]
+}

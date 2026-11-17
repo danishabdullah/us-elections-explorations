@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Democrats ran on Sanders's message in 2026, endorsed or not, and ran far ahead of Harris</title>
+<style>
+:root {
+  color-scheme: dark;
+  --ground: #0f1419;
+  --raise: #151c23;
+  --ink: #e9edf2;
+  --ink-2: #b3bdc9;
+  --muted: #8591a0;
+  --grid: #1d252e;
+  --axis: #34404d;
+  --rule: #232c36;
+  --hot: #e2691f;   /* Sanders-endorsed */
+  --cool: #4f8fdb;  /* other Democrats / independents */
+  --fit: #d5dde6;
+  --neutral: #5c6876;
+  --serif: "Iowan Old Style", "Charter", "Source Serif 4", "Source Serif Pro", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --z-tooltip: 40;
+}
+* { box-sizing: border-box; }
+html { background: var(--ground); scrollbar-color: var(--axis) var(--ground); }
+body { margin: 0; color: var(--ink); font: 17px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+::selection { background: rgba(226, 105, 31, .38); color: var(--ink); }
+:focus-visible { outline: 2px solid var(--hot); outline-offset: 3px; border-radius: 2px; }
+a { color: var(--ink); text-decoration-color: var(--axis); text-underline-offset: 3px; }
+a:hover { text-decoration-color: var(--ink); }
+
+main { max-width: 1000px; margin: 0 auto; padding: clamp(40px, 8vw, 96px) clamp(18px, 4vw, 40px) 96px; }
+.measure { max-width: 66ch; }
+
+header h1 { font: 600 clamp(2rem, 4.6vw, 3.4rem)/1.07 var(--serif); letter-spacing: -0.015em;
+  margin: 0 0 22px; text-wrap: balance; max-width: 20ch; }
+.dek { font-size: clamp(1.05rem, 1.6vw, 1.2rem); line-height: 1.55; color: var(--ink-2); margin: 0 0 22px; text-wrap: pretty; }
+.meta { font-size: 14px; color: var(--muted); margin: 0; }
+.meta span + span::before { content: "·"; margin: 0 .55em; color: var(--axis); }
+
+.key { white-space: nowrap; color: var(--ink); font-weight: 600; }
+.key::before { content: ""; display: inline-block; width: .62em; height: .62em; border-radius: 50%;
+  margin-right: .35em; vertical-align: .06em; background: currentColor; }
+.key.hot::before { background: var(--hot); }
+.key.cool::before { background: var(--cool); }
+
+section { margin-top: clamp(64px, 10vw, 112px); padding-top: 28px; border-top: 1px solid var(--rule); }
+section h2 { font: 600 clamp(1.45rem, 2.6vw, 1.95rem)/1.18 var(--serif); letter-spacing: -0.01em;
+  margin: 0 0 14px; text-wrap: balance; max-width: 30ch; }
+section p { color: var(--ink-2); margin: 0 0 14px; text-wrap: pretty; }
+section p strong { color: var(--ink); font-weight: 600; }
+.chart { margin-top: 28px; position: relative; }
+.chart svg { display: block; overflow: visible; }
+.note { font-size: 13.5px; color: var(--muted); margin-top: 10px; }
+
+svg text { font-family: var(--sans); }
+.tick { font-size: 11.5px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.lbl { font-size: 12.5px; fill: var(--ink-2); }
+.lbl.hot { fill: var(--ink); font-weight: 650; }
+.ann { font-size: 13px; fill: var(--ink); }
+.ann.dim { fill: var(--ink-2); }
+.on-line { font-size: 12px; fill: var(--muted); font-style: italic; }
+.num { font-size: 12.5px; fill: var(--ink-2); font-variant-numeric: tabular-nums; }
+.num.hot { fill: var(--ink); font-weight: 650; }
+.colhead { font-size: 11.5px; fill: var(--muted); }
+.grouphead { font-size: 13px; fill: var(--ink); font-weight: 600; }
+.groupsub { font-size: 12px; fill: var(--muted); }
+.hit { fill: transparent; }
+.hit:focus { outline: none; }
+.hit:focus-visible { stroke: var(--ink); stroke-width: 1.5; }
+
+#tip { position: fixed; z-index: var(--z-tooltip); pointer-events: none; max-width: 310px;
+  background: var(--raise); border: 1px solid var(--axis); border-radius: 8px; padding: 10px 12px;
+  font-size: 13px; line-height: 1.5; color: var(--ink-2); box-shadow: 0 10px 30px rgba(0,0,0,.45);
+  opacity: 0; transform: translateY(4px); transition: opacity .12s ease-out, transform .18s cubic-bezier(.16,1,.3,1); }
+#tip.on { opacity: 1; transform: none; }
+#tip b { color: var(--ink); font-weight: 620; }
+#tip .head { color: var(--ink); font-weight: 650; display: block; margin-bottom: 4px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--ink-2); margin: 22px 0 14px; padding: 0; list-style: none; }
+.legend li { display: flex; align-items: center; gap: 6px; }
+.legend svg { flex: none; }
+.colh { font-size: 11.5px; fill: var(--ink-2); }
+.panelr { font-size: 15px; fill: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; }
+.panels { font-size: 11.5px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.paneltitle { font-size: 12.5px; fill: var(--ink); font-weight: 600; }
+a.cell:focus { outline: none; }
+a.cell:focus-visible rect.ring { stroke: var(--ink); }
+.method h2 { font-size: 1.35rem; }
+.method p { font-size: 15px; }
+details { margin-top: 18px; }
+summary { cursor: pointer; color: var(--ink); font-weight: 600; font-size: 15px; }
+summary::marker { color: var(--muted); }
+.tablewrap { overflow-x: auto; margin-top: 14px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th:nth-child(-n+2), td:nth-child(-n+2) { text-align: left; }
+th { color: var(--muted); font-weight: 560; font-size: 12.5px; }
+td { color: var(--ink-2); }
+tr.hot td:nth-child(2) { color: var(--ink); font-weight: 600; }
+tr.hot td:nth-child(2)::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--hot); margin-right: 7px; vertical-align: 1px; }
+caption { caption-side: bottom; text-align: left; padding-top: 10px; color: var(--muted); font-size: 12.5px; }
+code { font-size: .92em; color: var(--ink); }
+
+@media (prefers-reduced-motion: reduce) { #tip { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Democrats ran on Sanders's message in 2026, endorsed or not, and ran far ahead of Harris</h1>
+    <p class="dek measure">A widely shared chart split 2026 Senate Democrats into the five <span class="key hot">Bernie Sanders endorsed</span> and <span class="key cool">everyone else</span>. That split misses the story. The other eleven ran on his message just as hard: the cost of living, billionaires, corporate power. On policy they moved toward him without going all the way: a public option rather than Medicare for All, a $15 minimum wage rather than $17. On Gaza, five of them broke with the Biden–Harris line and would restrict arms to Israel. And 15 of the 16 ran ahead of Harris, by a median of 16 points. A midterm under Trump explains part of that gain; with nearly everyone on the same message, these races can't say how much.</p>
+    <p class="meta"><span>16 Senate races</span><span>Unofficial counts as of Nov 7, 2026</span><span><a href="#method">Method and sources</a></span></p>
+  </header>
+
+  <section id="alignment" aria-labelledby="h5s">
+    <h2 id="h5s">Endorsed or not, they ran on Sanders's message. On policy, most went part of the way</h2>
+    <p class="measure">All 16 candidates, measured the same way from their own words, votes and pledges: three campaign-message themes, four Sanders policies, their stance on Israel and Gaza, and endorsements from progressive groups. Read down any message column: it's nearly solid, whoever endorsed them.</p>
+    <p class="measure"><strong>Message:</strong> ten of the eleven ran on the cost of living, and nine each ran against billionaires and against corporate power, centrists such as <strong>Cooper</strong> included. <strong>Policy:</strong> none backed Medicare for All, but eight backed a public option or Medicare buy-in, and ten backed raising the federal minimum wage, mostly to $15. Most also refused corporate PAC money or want Citizens United overturned. <strong>Israel and Gaza:</strong> <strong>Osborn</strong> would cut off aid to Israel outright, and <strong>Ossoff</strong>, <strong>Talarico</strong>, <strong>Turek</strong> and <strong>Hamilton</strong> would restrict arms while condemning how the war was fought. A faint dot means we found nothing either way.</p>
+    <div class="chart" id="c5" role="img" aria-label="Grid of 16 candidates by message, policy, Israel and Gaza stance and group endorsements; filled squares are yes, half-filled are part way, outlined are no, faint dots are unclear"></div>
+    <p class="note">The Israel and Gaza stance is one judgment per candidate from their whole record, weighted to the 2025–26 campaign, on a 0–4 scale of distance from Sanders's position: 4 with Sanders or beyond, 3 restrict arms and sharply condemn the conduct, 2 critical but no arms limits, 1 supportive with concern, 0 unconditional support. Two assessors rated each candidate independently. Hover or focus a cell for the evidence; click it to open the source.</p>
+  </section>
+
+
+  <section aria-labelledby="h1s">
+    <h2 id="h1s">15 of the 16 ran ahead of Harris. The fair question is by how much, given the state</h2>
+    <p class="measure">Dots above the dashed line ran ahead of Harris, and in a strong Democratic year that's nearly everyone. The solid line shows what a candidate typically got for a given Harris margin across all 16 races. It's flatter than the dashed line: candidates gained most in red states and least in blue ones.</p>
+    <div class="chart" id="c1" role="img" aria-label="Scatter plot of 2026 Senate margin against Harris 2024 margin for 16 states, with a fitted line"></div>
+  </section>
+
+  <section aria-labelledby="h2s">
+    <h2 id="h2s">Against that expectation, four of the five endorsed candidates fell short; the rest were split</h2>
+    <p class="measure">Each candidate's distance from the solid line above, in points of margin. <strong>Markey</strong> is the only Sanders pick above it. <strong>Jackson</strong>, who replaced Graham Platner as Maine's nominee in late July, finished furthest below. The shaded band is the typical miss for any candidate. With five candidates, one or two races move the group average a lot.</p>
+    <div class="chart" id="c2" role="img" aria-label="Dot plot of each candidate's margin above or below the fitted line"></div>
+  </section>
+
+  <section aria-labelledby="h3s">
+    <h2 id="h3s">Compared with the last race for the same seat, they were roughly average</h2>
+    <p class="measure">The arrow runs from the previous November result for each seat to 2026. Seats Democrats already won had much less room to swing, so each swing is compared with the median of similar seats. On this view <strong>El-Sayed</strong> and <strong>Flanagan</strong> lead their group, and <strong>Jackson</strong> and <strong>Nixon</strong> sit near the median of theirs.</p>
+    <div class="chart" id="c3" role="img" aria-label="Arrow chart of each seat's prior margin and 2026 margin, grouped by who won the prior race"></div>
+    <p class="note">Most previous races were in 2020, a presidential year. Georgia uses the Nov 2020 general; Ossoff won the seat in the Jan 2021 runoff. Nebraska uses the 2024 special for this seat.</p>
+  </section>
+
+  <section aria-labelledby="h3bs">
+    <h2 id="h3bs">Against their own past races, Osborn and Peltola were about as far ahead as usual. Ossoff, Cooper and Brown gained the most</h2>
+    <p class="measure">Six of the 16 have run statewide before, which gives a baseline that belongs to the candidate rather than the seat: how far each ran ahead of their party's presidential candidate in that earlier race, and how far ahead of Harris in 2026.</p>
+    <p class="measure"><strong>Osborn</strong> and <strong>Peltola</strong> ran 14 and 11 points ahead of Harris on the same 2024 ballot; in 2026 they were 14 and 13 ahead. Running ahead of Harris wasn't new for them. <strong>Brown</strong> roughly doubled his edge, from 8 points to 16. <strong>Ossoff</strong> and <strong>Cooper</strong> ran within a few points of Biden in 2020 and more than 20 ahead of Harris in 2026. <strong>Markey</strong>, the one Sanders pick here, went from level with Biden to 6 ahead of Harris.</p>
+    <div class="chart" id="c3b" role="img" aria-label="For six candidates who ran statewide before, how far they ran ahead of their party's presidential candidate in that earlier race and in 2026"></div>
+    <p class="note">Every earlier race shared a ballot with the presidential race it is compared with; 2026 had no presidential race, so “now” compares with Harris's 2024 result. Osborn is an independent; he is compared with Harris. Alaska uses first-choice votes. Earlier results are from the Clerk of the House, the FEC and North Carolina's certified canvass, each matched to the state's own file.</p>
+  </section>
+
+  <section id="selection" aria-labelledby="h4s">
+    <h2 id="h4s">When Sanders began endorsing, his picks were in competitive races as often as the others. The other races tightened later</h2>
+    <p class="measure">A rating made after an endorsement can't show how a race was chosen: the endorsement, and the nominee it helped pick, can move the rating. So these are Sabato's Crystal Ball ratings over time, from its first ratings in February 2025 to its last on Nov 2, 2026.</p>
+    <p class="measure">Before Sanders's first endorsement, of El-Sayed on Apr 17, 2025, <strong>three</strong> of his five eventual picks were in competitive races (Lean or Toss-up): Michigan, Minnesota and Maine. So were <strong>three</strong> of the other eleven. His picks' ratings then barely moved. Seven of the other eleven started out Safe or Likely Republican and moved toward Democrats, mostly during 2026. By the final ratings, seven of the eleven were competitive, against two of the five picks.</p>
+    <div class="chart" id="c4" role="img" aria-label="For each of the 16 races, the Crystal Ball rating over time from February 2025 to November 2026, with the date Sanders endorsed each of his five picks"></div>
+    <p class="measure" style="margin-top:30px">So Sanders didn't steer around close races. What his picks shared was a fight inside the party: four of the five won a seriously contested primary, against three of the eleven others, and three of the five endorsements came during a primary. Two, Jackson and Nixon, came only in the final months.</p>
+    <p class="note">Two independent collections of every rating change agreed on all 38 changes; for 2025 they relied on syndicated copies and same-day reports because the Crystal Ball's site blocked automated access, so a change made and reversed within 2025 could be missing. Jackson's date is a rally in Bangor; Sanders made no dated written endorsement.</p>
+  </section>
+
+  <section id="payoff" aria-labelledby="h6s">
+    <h2 id="h6s">Among candidates who all ran on his message, going further toward Sanders didn't bring better results</h2>
+    <p class="measure">This can't tell you whether Sanders's message paid off. Fifteen of the 16 candidates ran on at least two of its three themes, and 15 of the 16 ran ahead of Harris, by a median of 16 points. With almost nobody running without the message, there's nothing to compare against.</p>
+    <p class="measure">What it can test is narrower: among candidates who all ran on that message, did going further toward Sanders's policies or his Israel stance help? Against the Harris expectation, candidates closer to his policies did <strong>worse</strong> (r −0.58). Most of that is the five picks: among the other eleven it weakens to −0.39, which chance alone could produce. Israel and Gaza stance shows no link among the eleven. Against each seat's last result, neither tracks performance.</p>
+
+    <div class="chart" id="c6" role="img" aria-label="Four small scatter plots of policy alignment and Israel and Gaza stance against the two performance measures, each with its correlation"></div>
+    <p class="note">r is the correlation across all 16 races; the range is a 90% bootstrap interval; p is from a permutation test (20,000 shuffles). Policy counts a full Sanders position as 1 and a step toward it (public option; a raise below $17) as ½. Unclear counts as 0.</p>
+  </section>
+
+  <section class="method" id="method" aria-labelledby="hm">
+    <h2 id="hm">Method and sources</h2>
+    <p class="measure">Margin is the Democratic (or independent) candidate's votes minus the Republican's, divided by all votes for the office. Nebraska 2026 had no Democrat; Dan Osborn ran as an independent. Maine and Alaska use first-choice counts. The 2026 counts are unofficial: Alaska was about 74% counted, Maine about 94%, Mississippi about 97% and Ohio about 98% at retrieval. The expectation line is an ordinary least-squares fit across all 16 races.</p>
+    <p class="measure">Every count comes from an official state source, FEC, a state's electoral certificate, the AP results feed or Decision Desk HQ, and each was checked against a second, independent source. Full citations are in <code>data/results.csv</code> and <code>data/sources.csv</code>.</p>
+    <p class="measure">Alignment codes follow a scheme written before collection (<code>data/alignment/SCHEMA.md</code>), revised in the open where it measured wording instead of positions; every revision is dated there. Values need the candidate's own words, vote, pledge, a named campaign spokesperson, or the endorsing group's own list; opposition research never decides a value. Positions evolve, so the latest clear position counts. Health care and the minimum wage are graded (Medicare for All / public option / neither; $17 or more / a lower or unnamed raise / no), replacing yes-or-no items that only matched Sanders's exact bills. Israel and Gaza is one assessed stance from each candidate's whole record, replacing four keyword items that missed positions stated in other words. Each dataset was coded twice independently and disagreements were resolved at the sources (<code>scripts/reconcile_*.py</code>). Dropped after collection, with reasons: the Green New Deal (a 2019–20 label 14 of 16 never mentioned) and Justice Democrats and the Progressive Caucus PAC (they endorsed only House candidates). Final values with evidence and sources are in <code>data/alignment/alignment_final.csv</code>; scores in <code>data/alignment/scores.csv</code>.</p>
+    <details>
+      <summary>All values</summary>
+      <div class="tablewrap"><table id="tbl"></table></div>
+      <div class="tablewrap"><table id="tbl2"></table></div>
+    </details>
+  </section>
+</main>
+<div id="tip" role="status" aria-live="polite"></div>
+
+<script>
+const DATA = /*DATA*/[];
+const STATS = /*STATS*/{};
+const NS = "http://www.w3.org/2000/svg";
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const r1 = v => Math.round(v * 10) / 10;
+const fmt = v => { const r = r1(v); return r === 0 ? "even" : (r > 0 ? "D +" : "R +") + Math.abs(r).toFixed(1); };
+const sgn = v => { const r = r1(v); return (r === 0 ? "±" : r > 0 ? "+" : "−") + Math.abs(r).toFixed(1); };
+const col = d => d.sanders ? "var(--hot)" : "var(--cool)";
+const surname = d => d.cand.split(" ").filter(w => !/^[A-Z]\.$/.test(w)).slice(-1)[0];
+
+// ---------- derived measures
+const n = DATA.length;
+const mean = (a, f) => a.reduce((s, d) => s + f(d), 0) / a.length;
+const median = a => { const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const mx = mean(DATA, d => d.harris), my = mean(DATA, d => d.m26);
+const B = DATA.reduce((s, d) => s + (d.harris - mx) * (d.m26 - my), 0) / DATA.reduce((s, d) => s + (d.harris - mx) ** 2, 0);
+const A = my - B * mx;
+DATA.forEach(d => {
+  d.fit = A + B * d.harris; d.resid = d.m26 - d.fit; d.raw = d.m26 - d.harris;
+  d.swing = d.m26 - d.prior; d.grp = d.prior > 0 ? "D" : "R";
+});
+const RMSE = Math.sqrt(mean(DATA, d => d.resid ** 2));
+const GMED = { D: median(DATA.filter(d => d.grp === "D").map(d => d.swing)), R: median(DATA.filter(d => d.grp === "R").map(d => d.swing)) };
+DATA.forEach(d => d.vsPeers = d.swing - GMED[d.grp]);
+const S = DATA.filter(d => d.sanders), O = DATA.filter(d => !d.sanders);
+
+// ---------- svg helpers
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function txt(parent, x, y, s, cls, anchor = "start", extra = {}) {
+  const t = el("text", { x, y, class: cls, "text-anchor": anchor, ...extra }, parent);
+  t.textContent = s; return t;
+}
+function svgIn(host, w, h) {
+  host.innerHTML = "";
+  const s = el("svg", { width: w, height: h, viewBox: `0 0 ${w} ${h}` }, host);
+  const defs = el("defs", {}, s);
+  for (const [id, c] of [["ah-hot", "var(--hot)"], ["ah-cool", "var(--cool)"]]) {
+    const m = el("marker", { id, viewBox: "0 0 10 10", refX: 8, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" }, defs);
+    el("path", { d: "M1,1 L9,5 L1,9 Z", fill: c }, m);
+  }
+  return s;
+}
+function dot(g, x, y, d, r) {
+  const hollow = d.st === "AK"; // count far from complete
+  el("circle", { cx: x, cy: y, r: r + 2.5, fill: "var(--ground)" }, g);
+  el("circle", hollow ? { cx: x, cy: y, r: r - 1, fill: "var(--ground)", stroke: col(d), "stroke-width": 2 }
+                      : { cx: x, cy: y, r, fill: col(d) }, g);
+}
+
+// ---------- tooltip
+const tip = document.getElementById("tip");
+function tipHTML(d) {
+  const inc = d.status === "incomplete" ? `<br>Count incomplete at retrieval (${d.as_of.split(";").slice(-1)[0].replace("(AP EEVP)", "").trim()})` : "";
+  return `<span class="head">${d.st} · ${d.cand}${d.party === "I" ? " (independent)" : ""} vs. ${d.opp}${d.sanders ? " · Sanders-endorsed" : ""}</span>
+    2026 Senate <b>${fmt(d.m26)}</b>${d.type26 === "special" ? " (special)" : ""} · Harris 2024 ${fmt(d.harris)}<br>
+    Expected from Harris margin ${fmt(d.fit)} → <b>${sgn(d.resid)}</b><br>
+    ${d.prior_year}: ${fmt(d.prior)} (${d.prior_cand} vs. ${d.prior_opp})<br>
+    Swing <b>${sgn(d.swing)}</b>, ${sgn(d.vsPeers)} vs. similar seats${inc}`;
+}
+function bindTipHTML(node, html, aria, focusable = true) {
+  if (focusable) node.setAttribute("tabindex", "0");
+  if (aria) node.setAttribute("aria-label", aria);
+  const show = (x, y) => {
+    tip.innerHTML = html(); tip.classList.add("on");
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    tip.style.left = Math.max(8, Math.min(x + 16, innerWidth - w - 8)) + "px";
+    tip.style.top = (y + 18 + h > innerHeight ? y - h - 12 : y + 18) + "px";
+  };
+  const hide = () => tip.classList.remove("on");
+  node.addEventListener("pointermove", e => show(e.clientX, e.clientY));
+  node.addEventListener("pointerleave", hide);
+  node.addEventListener("focus", () => { const r = node.getBoundingClientRect(); show(r.left + r.width / 2, r.top + r.height / 2); });
+  node.addEventListener("blur", hide);
+}
+function bindTip(node, d) {
+  node.setAttribute("tabindex", "0");
+  node.setAttribute("aria-label", `${d.st}, ${d.cand}: 2026 ${fmt(d.m26)}; Harris ${fmt(d.harris)}; ${sgn(d.resid)} versus expected; swing ${sgn(d.swing)} from ${d.prior_year}`);
+  const show = (x, y) => {
+    tip.innerHTML = tipHTML(d); tip.classList.add("on");
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    tip.style.left = Math.max(8, Math.min(x + 16, innerWidth - w - 8)) + "px";
+    tip.style.top = (y + 18 + h > innerHeight ? y - h - 12 : y + 18) + "px";
+  };
+  const hide = () => tip.classList.remove("on");
+  node.addEventListener("pointermove", e => show(e.clientX, e.clientY));
+  node.addEventListener("pointerleave", hide);
+  node.addEventListener("focus", () => { const r = node.getBoundingClientRect(); show(r.left + r.width / 2, r.top + r.height / 2); });
+  node.addEventListener("blur", hide);
+}
+
+// ---------- one authored motion: stems/arrows draw out from their origin the first time a chart is seen
+function drawIn(lines) {
+  if (REDUCED) return;
+  lines.forEach((ln, i) => {
+    const len = ln.getTotalLength(); if (!len) return;
+    ln.style.strokeDasharray = len;
+    ln.animate([{ strokeDashoffset: len }, { strokeDashoffset: 0 }],
+      { duration: 900, delay: 120 + i * 35, easing: "cubic-bezier(.16,1,.3,1)", fill: "backwards" })
+      .finished.then(() => { ln.style.strokeDasharray = ""; }).catch(() => {});
+  });
+}
+const seen = new Set();
+function onFirstView(id, fn) {
+  if (seen.has(id)) return;
+  const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { seen.add(id); io.disconnect(); fn(); } }, { threshold: .25 });
+  io.observe(document.getElementById(id));
+}
+
+// ---------- Chart 1: scatter with expectation line
+function chart1(host) {
+  const w = host.clientWidth, wide = w >= 640;
+  const m = { l: wide ? 64 : 48, r: wide ? 24 : 12, t: 16, b: 48 };
+  const pw = w - m.l - m.r, h = Math.round(pw * (wide ? 0.78 : 0.95)) + m.t + m.b;
+  const svg = svgIn(host, w, h), g = el("g", {}, svg);
+  const xlo = -25, xhi = 30, ylo = -10, yhi = 35;
+  const X = v => m.l + (v - xlo) / (xhi - xlo) * pw;
+  const Y = v => h - m.b - (v - ylo) / (yhi - ylo) * (h - m.t - m.b);
+  const tf = v => v === 0 ? "0" : fmt(v).replace(".0", "");
+  for (let v = -20; v <= xhi; v += 10) {
+    el("line", { x1: X(v), x2: X(v), y1: Y(ylo), y2: Y(yhi), stroke: v ? "var(--grid)" : "var(--axis)" }, g);
+    txt(g, X(v), h - m.b + 20, tf(v), "tick", "middle");
+  }
+  for (let v = ylo; v <= yhi; v += (wide ? 5 : 10)) {
+    el("line", { x1: X(xlo), x2: X(xhi), y1: Y(v), y2: Y(v), stroke: v ? "var(--grid)" : "var(--axis)" }, g);
+    txt(g, m.l - 10, Y(v) + 4, tf(v), "tick", "end");
+  }
+  txt(g, X(xhi), h - 6, "Harris 2024 margin in the state →", "tick", "end");
+  txt(g, X(xlo) + 6, Y(yhi) + 14, "↑ 2026 Senate margin", "tick", "start");
+
+  // y = x
+  el("line", { x1: X(ylo), y1: Y(ylo), x2: X(xhi), y2: Y(xhi), stroke: "var(--muted)", "stroke-width": 1.25, "stroke-dasharray": "4 5" }, g);
+  const ang = (x0, y0, x1, y1) => Math.atan2(Y(y1) - Y(y0), X(x1) - X(x0)) * 180 / Math.PI;
+  const a1 = ang(0, 0, 10, 10);
+  if (wide) txt(g, X(18), Y(18) + 16, "matched Harris", "on-line", "middle", { transform: `rotate(${a1} ${X(18)} ${Y(18) + 16})` });
+  // expectation line
+  const ex0 = xlo, ex1 = Math.min(xhi, (yhi - A) / B);
+  el("line", { x1: X(ex0), y1: Y(A + B * ex0), x2: X(ex1), y2: Y(A + B * ex1), stroke: "var(--fit)", "stroke-width": 2, "stroke-linecap": "round" }, g);
+  const a2 = ang(0, A, 10, A + 10 * B), lx = wide ? 13 : 17;
+  txt(g, X(lx), Y(A + B * lx) - 9, wide ? "expected, given the Harris margin" : "expected", "on-line", "middle",
+      { transform: `rotate(${a2} ${X(lx)} ${Y(A + B * lx) - 9})`, style: "fill: var(--ink-2)" });
+
+  // annotations (wide only)
+  if (wide) {
+    const ann = [
+      { st: "MA", lines: ["Markey: the only Sanders", "pick above the line"], dx: -18, dy: 42, anchor: "end" },
+      { st: "ME", lines: ["Jackson: 10 points", "below expectation"], dx: 30, dy: 34, anchor: "start" },
+      { st: "NC", lines: ["Cooper: furthest above,", "9 points"], dx: -26, dy: -30, anchor: "end", dim: true },
+    ];
+    ann.forEach(a => {
+      const d = DATA.find(x => x.st === a.st); if (!d) return;
+      const x = X(d.harris), y = Y(d.m26), tx = x + a.dx, ty = y + a.dy;
+      el("path", { d: `M${x + Math.sign(a.dx) * 8},${y + Math.sign(a.dy) * 6} L${tx},${ty - 12}`, stroke: "var(--axis)", "stroke-width": 1, fill: "none" }, g);
+      a.lines.forEach((s, i) => txt(g, tx, ty + i * 16, s, a.dim ? "ann dim" : "ann", a.anchor));
+    });
+  }
+
+  const off = { IA: [0, 19, "middle"], FL: [-10, 4, "end"], AK: [-10, 4, "end"], TX: [-10, 4, "end"], SC: [-10, 4, "end"],
+                MS: [-10, 4, "end"], OH: [10, -5, "start"], NH: [10, 4, "start"] };
+  const pts = el("g", {}, svg);
+  [...DATA].sort((p, q) => p.sanders - q.sanders).forEach(d => {
+    const x = X(d.harris), y = Y(d.m26);
+    dot(pts, x, y, d, wide ? 6 : 5);
+    const [dx, dy, an] = off[d.st] || [10, 4, "start"];
+    txt(pts, x + dx, y + dy, d.st === "AK" ? "AK*" : d.st, d.sanders ? "lbl hot" : "lbl", an);
+    bindTip(el("circle", { cx: x, cy: y, r: 14, class: "hit" }, pts), d);
+  });
+}
+
+// ---------- shared row layout for charts 2 and 3
+function rowFrame(w) {
+  const wide = w >= 640;
+  return { wide, labelW: wide ? 168 : 88, valW: wide ? 132 : 104, rowH: wide ? 32 : 30 };
+}
+function rowLabel(g, d, x, y, wide) {
+  const name = wide ? `${surname(d)}${d.party === "I" ? " (I)" : ""}` : surname(d);
+  const t = txt(g, x, y + 4, "", d.sanders ? "lbl hot" : "lbl", "end");
+  const a = el("tspan", { style: "fill: var(--muted); font-weight: 400" }, t); a.textContent = d.st + "  ";
+  const b = el("tspan", {}, t); b.textContent = name + (d.st === "AK" ? "*" : "");
+}
+
+// ---------- Chart 2: distance from expectation
+function chart2(host, animate) {
+  const w = host.clientWidth, F = rowFrame(w);
+  const rows = [...DATA].sort((p, q) => q.resid - p.resid);
+  const top = 46, bot = 40, h = top + rows.length * F.rowH + bot;
+  const svg = svgIn(host, w, h), g = el("g", {}, svg);
+  const x0 = F.labelW + 14, x1 = w - (F.wide ? 70 : 52);
+  const lim = Math.ceil(Math.max(...rows.map(d => Math.abs(d.resid))) / 2) * 2;
+  const X = v => x0 + (v + lim) / (2 * lim) * (x1 - x0);
+  const yTop = top, yBot = top + rows.length * F.rowH;
+  // typical-miss band
+  el("rect", { x: X(-RMSE), y: yTop, width: X(RMSE) - X(-RMSE), height: yBot - yTop, fill: "rgba(213,221,230,.055)" }, g);
+  for (let v = -lim; v <= lim; v += (F.wide ? 2 : 4)) {
+    el("line", { x1: X(v), x2: X(v), y1: yTop, y2: yBot, stroke: v ? "var(--grid)" : "var(--axis)" }, g);
+    txt(g, X(v), yBot + 20, v === 0 ? "as expected" : sgn(v).replace(".0", ""), "tick", "middle");
+  }
+  txt(g, X(lim), h - 4, "points above expectation →", "tick", "end");
+  txt(g, X(-lim), h - 4, "← below", "tick", "start");
+  // group averages
+  const ms = mean(S, d => d.resid), mo = mean(O, d => d.resid);
+  [[ms, "var(--hot)", `Sanders picks avg ${sgn(ms)}`, "end"], [mo, "var(--cool)", `others avg ${sgn(mo)}`, "start"]].forEach(([v, c, s, an]) => {
+    el("line", { x1: X(v), x2: X(v), y1: yTop - 10, y2: yBot, stroke: c, "stroke-width": 1.5, opacity: .9 }, g);
+    txt(g, X(v) + (an === "end" ? -6 : 6), yTop - 14, s, "ann", an, { style: "font-size:12.5px; font-weight:600" });
+  });
+  txt(g, X(RMSE) + 4, yBot - 6, F.wide ? `typical miss ±${RMSE.toFixed(1)}` : `±${RMSE.toFixed(1)}`, "on-line", "start");
+  const stems = [];
+  rows.forEach((d, i) => {
+    const y = yTop + i * F.rowH + F.rowH / 2;
+    rowLabel(g, d, F.labelW, y, F.wide);
+    stems.push(el("line", { x1: X(0), x2: X(d.resid), y1: y, y2: y, stroke: col(d), "stroke-width": 2.5, "stroke-linecap": "round", opacity: .55 }, g));
+    dot(g, X(d.resid), y, d, 5.5);
+    txt(g, w - 4, y + 4, sgn(d.resid), d.sanders ? "num hot" : "num", "end");
+    bindTip(el("rect", { x: 0, y: y - F.rowH / 2, width: w, height: F.rowH, class: "hit" }, g), d);
+  });
+  if (animate) drawIn(stems);
+}
+
+// ---------- Chart 3: same-seat swing, grouped by who won last time
+function chart3(host, animate) {
+  const w = host.clientWidth, F = rowFrame(w);
+  const groups = [
+    { k: "R", head: "Republican won or led last time", rows: DATA.filter(d => d.grp === "R").sort((p, q) => q.swing - p.swing) },
+    { k: "D", head: "Democrat won last time", rows: DATA.filter(d => d.grp === "D").sort((p, q) => q.swing - p.swing) },
+  ];
+  const headH = 52, gap = 18, bot = 40, top = 28;
+  const h = top + groups.reduce((s, gp) => s + headH + gp.rows.length * F.rowH + gap, 0) + bot;
+  const svg = svgIn(host, w, h), g = el("g", {}, svg);
+  const valCols = F.wide ? [w - 84, w - 4] : [w - 48, w - 4];
+  const x0 = F.labelW + 10, x1 = valCols[0] - (F.wide ? 64 : 44);
+  const lo = -40, hi = 40, X = v => x0 + (v - lo) / (hi - lo) * (x1 - x0);
+  const yEnd = h - bot;
+  for (let v = lo; v <= hi; v += (F.wide ? 10 : 40)) {
+    el("line", { x1: X(v), x2: X(v), y1: top, y2: yEnd, stroke: v ? "var(--grid)" : "var(--axis)" }, g);
+    txt(g, X(v), yEnd + 20, v === 0 ? "0" : fmt(v).replace(".0", ""), "tick", "middle");
+  }
+  txt(g, X(hi), h - 4, "Democratic margin, last race → 2026", "tick", "end");
+  txt(g, valCols[0], top - 10, "swing", "colhead", "end");
+  txt(g, valCols[1], top - 10, F.wide ? "vs. similar" : "vs. sim.", "colhead", "end");
+  const arrows = [];
+  let y = top;
+  groups.forEach(gp => {
+    el("rect", { x: 0, y: y + 6, width: w, height: headH - 14, fill: "var(--ground)" }, g);
+    txt(g, 0, y + 26, gp.head, "grouphead", "start");
+    txt(g, 0, y + 43, `${gp.rows.length} seats · median swing ${sgn(GMED[gp.k])}`, "groupsub", "start");
+    y += headH;
+    gp.rows.forEach(d => {
+      const cy = y + F.rowH / 2;
+      rowLabel(g, d, F.labelW, cy, F.wide);
+      el("circle", { cx: X(d.prior), cy, r: 4, fill: "var(--ground)", stroke: "var(--neutral)", "stroke-width": 2 }, g);
+      const dir = Math.sign(d.m26 - d.prior) || 1;
+      const ln = el("line", { x1: X(d.prior) + dir * 5, y1: cy, x2: X(d.m26) - dir * 2, y2: cy, stroke: col(d),
+        "stroke-width": 2, "marker-end": `url(#${d.sanders ? "ah-hot" : "ah-cool"})` }, g);
+      if (Math.abs(X(d.m26) - X(d.prior)) > 16) arrows.push(ln);
+      txt(g, valCols[0], cy + 4, sgn(d.swing), d.sanders ? "num hot" : "num", "end");
+      txt(g, valCols[1], cy + 4, sgn(d.vsPeers), d.sanders ? "num hot" : "num", "end");
+      bindTip(el("rect", { x: 0, y: y, width: w, height: F.rowH, class: "hit" }, g), d);
+      y += F.rowH;
+    });
+    y += gap;
+  });
+  if (animate) drawIn(arrows);
+}
+
+
+// ---------- Chart 4: Crystal Ball rating over time, all 16
+const RATINGS = ["Safe Republican", "Likely Republican", "Leans Republican", "Toss-up", "Leans Democratic", "Likely Democratic", "Safe Democratic"];
+const RSHORT = ["Safe R", "Likely R", "Lean R", "Toss-up", "Lean D", "Likely D", "Safe D"];
+const rIdx = r => RATINGS.findIndex(x => x.toLowerCase() === (r || "").toLowerCase());
+const rShort = r => RSHORT[rIdx(r)] || r;
+const ds = s => { const [y, m, d] = s.split("-").map(Number); return Date.UTC(y, m - 1, d); };
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const dlong = s => { const [y, m, d] = s.split("-").map(Number); return `${MON[m - 1]} ${d}, ${y}`; };
+const FIRST = "2025-04-17";
+const ratingOn = (d, day) => { let r = null; d.ratings.forEach(([t, v]) => { if (t <= day) r = v; }); return r; };
+const competitive = r => { const i = rIdx(r); return i >= 2 && i <= 4; };
+function chart4(host) {
+  const w = host.clientWidth, wide = w >= 640;
+  const labelW = wide ? 150 : 84, valW = wide ? 132 : 62, rowH = wide ? 50 : 44, pad = 7;
+  const groups = [
+    { head: "Sanders picks", rows: [...S].sort((p, q) => p.endorse_date.localeCompare(q.endorse_date)) },
+    { head: "The other eleven", rows: [...O].sort((p, q) => rIdx(ratingOn(q, FIRST)) - rIdx(ratingOn(p, FIRST)) || p.st.localeCompare(q.st)) },
+  ];
+  const headH = 50, gap = 14, top = 74, bot = 36;
+  const h = top + groups.reduce((a, gp) => a + headH + gp.rows.length * rowH + gap, 0) + bot;
+  const svg = svgIn(host, w, h), g = el("g", {}, svg);
+  const t0 = Date.UTC(2025, 1, 1), t1 = Date.UTC(2026, 10, 3);
+  const x0 = labelW + 12, x1 = w - valW - 10;
+  const X = t => x0 + (t - t0) / (t1 - t0) * (x1 - x0);
+  const yEnd = h - bot;
+  (wide ? [[2025, 3], [2025, 6], [2025, 9], [2026, 0], [2026, 3], [2026, 6], [2026, 9]] : [[2025, 6], [2026, 0], [2026, 6]]).forEach(([y, m]) => {
+    const x = X(Date.UTC(y, m, 1));
+    el("line", { x1: x, x2: x, y1: top, y2: yEnd, stroke: "var(--grid)" }, g);
+    txt(g, x, yEnd + 20, `${MON[m]}${m === 0 || !wide ? " " + y : ""}`, "tick", "middle");
+  });
+  // key: how a row reads
+  { const kx = 0, ky = 4, kh = 44, Lk = i => ky + kh - 4 - i / 6 * (kh - 8);
+    el("rect", { x: kx, y: Lk(4.5), width: 26, height: Lk(1.5) - Lk(4.5), fill: "rgba(213,221,230,.10)" }, g);
+    el("line", { x1: kx, x2: kx + 26, y1: Lk(3), y2: Lk(3), stroke: "var(--axis)", "stroke-dasharray": "2 3" }, g);
+    el("path", { d: `M${kx},${Lk(0)} H${kx + 9} V${Lk(3)} H${kx + 18} V${Lk(5)} H${kx + 26}`, fill: "none", stroke: "var(--ink-2)", "stroke-width": 1.5 }, g);
+    [[6, "Safe D"], [3, "Toss-up (dotted); shaded band = Lean R to Lean D, competitive"], [0, "Safe R"]].forEach(([i, t]) =>
+      txt(g, kx + 34, Lk(i) + 4, wide || i !== 3 ? t : "Toss-up; band = competitive", "tick", "start")); }
+  const xf = X(ds(FIRST));
+  el("line", { x1: xf, x2: xf, y1: top - 8, y2: yEnd, stroke: "var(--hot)", "stroke-width": 1.2, "stroke-dasharray": "3 3", opacity: .8 }, g);
+  txt(g, xf + 5, top - 12, wide ? "Sanders's first endorsement, Apr 17, 2025" : "1st endorsement", "ann dim", "start", { style: "font-size:12px" });
+  txt(g, w, top - 12, wide ? "start → final" : "final", "colhead", "end");
+  let y = top;
+  groups.forEach(gp => {
+    const c0 = gp.rows.filter(d => competitive(ratingOn(d, FIRST))).length, c1 = gp.rows.filter(d => competitive(d.rating_final)).length;
+    el("rect", { x: 0, y: y + 6, width: w, height: headH - 12, fill: "var(--ground)" }, g);
+    txt(g, 0, y + 26, gp.head, "grouphead", "start");
+    txt(g, 0, y + 42, wide ? `competitive: ${c0} of ${gp.rows.length} before his first endorsement, ${c1} of ${gp.rows.length} at the end` : `competitive: ${c0} of ${gp.rows.length} at first, ${c1} of ${gp.rows.length} at the end`, "groupsub", "start");
+    y += headH;
+    gp.rows.forEach(d => {
+      const yb = y + rowH - pad, yt = y + pad, L = i => yb - i / 6 * (yb - yt);
+      el("rect", { x: x0, y: L(4.5), width: x1 - x0, height: L(1.5) - L(4.5), fill: "rgba(213,221,230,.10)" }, g);
+      el("line", { x1: x0, x2: x1, y1: L(3), y2: L(3), stroke: "var(--axis)", "stroke-width": 1, "stroke-dasharray": "2 3" }, g);
+      el("line", { x1: x0, x2: x1, y1: y + rowH, y2: y + rowH, stroke: "var(--rule)" }, g);
+      rowLabel(g, d, labelW, y + rowH / 2, wide);
+      const pts = d.ratings.map(([t, r]) => [Math.max(x0, X(ds(t))), L(rIdx(r))]);
+      let path = `M${pts[0][0]},${pts[0][1]}`;
+      pts.slice(1).forEach(([px, py]) => { path += ` H${px} V${py}`; });
+      path += ` H${x1}`;
+      el("path", { d: path, fill: "none", stroke: col(d), "stroke-width": 2, "stroke-linejoin": "round" }, g);
+      if (d.sanders) {
+        const r = ratingOn(d, d.endorse_date);
+        el("circle", { cx: X(ds(d.endorse_date)), cy: L(rIdx(r)), r: 7, fill: "var(--ground)" }, g);
+        el("circle", { cx: X(ds(d.endorse_date)), cy: L(rIdx(r)), r: 5, fill: "var(--hot)" }, g);
+      }
+      const r0 = ratingOn(d, FIRST);
+      txt(g, w, y + rowH / 2 + 4, wide ? `${rShort(r0)} → ${rShort(d.rating_final)}` : rShort(d.rating_final), d.sanders ? "num hot" : "num", "end");
+      bindTipHTML(el("rect", { x: 0, y, width: w, height: rowH, class: "hit" }, g),
+        () => `<span class="head">${d.st} · ${d.cand}${d.sanders ? " · Sanders-endorsed" : ""}</span>` +
+          d.ratings.map(([t, r]) => `${dlong(t)}: <b>${r}</b>`).join("<br>") +
+          (d.sanders ? `<br>Sanders endorsed ${dlong(d.endorse_date)}, during the ${d.endorse_stage}, when rated ${ratingOn(d, d.endorse_date)}` : ""),
+        `${d.st}, ${d.cand}: rated ${r0} before Sanders's first endorsement, ${d.rating_final} at the end` + (d.sanders ? `; endorsed ${d.endorse_date}` : ""));
+      y += rowH;
+    });
+    y += gap;
+  });
+}
+
+// ---------- Chart 3b: ahead of the party's presidential candidate, earlier race vs. 2026
+function chart3b(host, animate) {
+  const w = host.clientWidth, wide = w >= 640;
+  const rows = DATA.filter(d => d.own).map(d => Object.assign(d, { then: d.own.m - d.own.top, now: d.m26 - d.harris })).sort((p, q) => q.now - p.now);
+  const labelW = wide ? 168 : 96, rowH = wide ? 46 : 46, top = 30, bot = 40;
+  const h = top + rows.length * rowH + bot;
+  const svg = svgIn(host, w, h), g = el("g", {}, svg);
+  const valCols = wide ? [w - 70, w - 4] : [w - 44, w - 4];
+  const x0 = labelW + 12, x1 = valCols[0] - (wide ? 58 : 40);
+  const lo = -5, hi = 25, X = v => x0 + (v - lo) / (hi - lo) * (x1 - x0);
+  const yEnd = top + rows.length * rowH;
+  for (let v = lo; v <= hi; v += (wide ? 5 : 10)) {
+    el("line", { x1: X(v), x2: X(v), y1: top, y2: yEnd, stroke: v ? "var(--grid)" : "var(--axis)" }, g);
+    txt(g, X(v), yEnd + 20, v === 0 ? "level" : sgn(v).replace(".0", ""), "tick", "middle");
+  }
+  txt(g, X(hi), h - 4, wide ? "points ahead of the party's presidential candidate →" : "points ahead of pres. candidate →", "tick", "end");
+  txt(g, valCols[0], top - 10, "then", "colhead", "end");
+  txt(g, valCols[1], top - 10, "2026", "colhead", "end");
+  const arrows = [];
+  rows.forEach((d, i) => {
+    const cy = top + i * rowH + rowH / 2;
+    rowLabel(g, d, labelW, cy - 6, wide);
+    txt(g, labelW, cy + 12, wide ? d.own.label : d.own.label.replace(", statewide", ""), "groupsub", "end", { style: "font-size:11.5px" });
+    el("circle", { cx: X(d.then), cy, r: 4, fill: "var(--ground)", stroke: "var(--neutral)", "stroke-width": 2 }, g);
+    const dir = Math.sign(d.now - d.then) || 1;
+    if (Math.abs(X(d.now) - X(d.then)) > 9) {
+      const ln = el("line", { x1: X(d.then) + dir * 5, y1: cy, x2: X(d.now) - dir * 2, y2: cy, stroke: col(d), "stroke-width": 2, "marker-end": `url(#${d.sanders ? "ah-hot" : "ah-cool"})` }, g);
+      if (Math.abs(X(d.now) - X(d.then)) > 16) arrows.push(ln);
+    } else dot(g, X(d.now), cy, d, 4.5);
+    txt(g, valCols[0], cy + 4, sgn(d.then), "num", "end");
+    txt(g, valCols[1], cy + 4, sgn(d.now), d.sanders ? "num hot" : "num", "end");
+    bindTipHTML(el("rect", { x: 0, y: cy - rowH / 2, width: w, height: rowH, class: "hit" }, g),
+      () => `<span class="head">${d.st} · ${d.cand}${d.sanders ? " · Sanders-endorsed" : ""}</span>${d.own.label} vs. ${d.own.opp}: ${fmt(d.own.m)}<br>${d.own.who} in the state that year: ${fmt(d.own.top)} → <b>${sgn(d.then)}</b> ahead<br>2026: ${fmt(d.m26)} · Harris 2024: ${fmt(d.harris)} → <b>${sgn(d.now)}</b> ahead`,
+      `${d.cand}: ${sgn(d.then)} versus ${d.own.who} in ${d.own.label}; ${sgn(d.now)} versus Harris in 2026`);
+  });
+  if (animate) drawIn(arrows);
+}
+
+// ---------- Chart 5: agenda grid
+const GROUPS = [
+  { head: "Message", items: [["msg_affordability", "Cost of living"], ["msg_anti_oligarchy", "Against billionaires"], ["msg_anti_corporate", "Against corporations"]] },
+  { head: "Sanders policies", items: [["health_level", "Health care"], ["min_wage_level", "Minimum wage"], ["no_corp_pac", "No corporate PAC $"], ["end_citizens_united", "Overturn Citizens Utd."]] },
+  { head: "Israel / Gaza", items: [["ig_stance", "Supportive → with Sanders", 3]] },
+  { head: "Progressive groups", items: [["endorsed_our_revolution", "Our Revolution"], ["endorsed_wfp", "Working Families"], ["endorsed_pccc", "PCCC"]] },
+];
+const VAL = { yes: "yes", no: "no", unclear: "unclear", "n/a": "n/a", m4a: "yes", "17plus": "yes", public_option: "part", raise: "part", neither: "no" };
+const VALTEXT = { m4a: "Medicare for All", public_option: "public option or Medicare buy-in, not single-payer", neither: "neither M4A nor a public option",
+  "17plus": "$17 an hour or more", raise: "raise it, below $17 or no figure", no: "no", yes: "yes", unclear: "nothing found either way" };
+function cellMark(g, x, y, s, v, color) {
+  if (v === "yes") el("rect", { x: x - s / 2, y: y - s / 2, width: s, height: s, rx: 2.5, fill: color }, g);
+  else if (v === "part") {
+    el("rect", { x: x - s / 2 + 1, y: y - s / 2 + 1, width: s - 2, height: s - 2, rx: 2, fill: "none", stroke: color, "stroke-width": 1.5 }, g);
+    el("path", { d: `M${x - s / 2 + 1},${y + s / 2 - 1} L${x + s / 2 - 1},${y - s / 2 + 1} L${x + s / 2 - 1},${y + s / 2 - 1} Z`, fill: color }, g);
+  }
+  else if (v === "no") el("rect", { x: x - s / 2 + 1, y: y - s / 2 + 1, width: s - 2, height: s - 2, rx: 2, fill: "none", stroke: "var(--neutral)", "stroke-width": 1.5 }, g);
+  else el("circle", { cx: x, cy: y, r: 1.8, fill: "var(--axis)" }, g);
+}
+const STANCE = { "4": "4 · with Sanders or beyond", "3": "3 · restrict arms, sharp condemnation", "2": "2 · critical, no arms limits", "1": "1 · supportive, with concern", "0": "0 · unconditional support", unknown: "no public record" };
+// Israel/Gaza stance drawn as a position on a five-step track (left: unconditional support, right: with Sanders), not a meter.
+function stanceMark(g, cx, y, w, s, v, color) {
+  const tw = Math.max(26, w - 4), x0 = cx - tw / 2, step = tw / 4;
+  el("line", { x1: x0, x2: x0 + tw, y1: y, y2: y, stroke: "var(--axis)", "stroke-width": 1.5 }, g);
+  for (let i = 0; i <= 4; i++) el("line", { x1: x0 + i * step, x2: x0 + i * step, y1: y - 3, y2: y + 3, stroke: "var(--axis)", "stroke-width": 1.5 }, g);
+  if (!/^[0-4]$/.test(v)) return;
+  const x = x0 + (+v) * step;
+  el("circle", { cx: x, cy: y, r: Math.max(4, s / 2 - 1) + 2, fill: "var(--ground)" }, g);
+  el("circle", { cx: x, cy: y, r: Math.max(4, s / 2 - 1), fill: color }, g);
+}
+function legend5(host) {
+  const ul = document.createElement("ul"); ul.className = "legend";
+  const mk = (v, c, label) => {
+    const li = document.createElement("li");
+    const s = document.createElementNS(NS, "svg"); s.setAttribute("width", 14); s.setAttribute("height", 14);
+    cellMark(s, 7, 7, 12, v, c); li.appendChild(s); li.append(label); ul.appendChild(li);
+  };
+  mk("yes", "var(--hot)", "yes (Sanders pick)"); mk("yes", "var(--cool)", "yes (others)"); mk("part", "var(--cool)", "part way (health, wage)"); mk("no", "", "no: stated or voted against");
+  { const li = document.createElement("li"); const sv = document.createElementNS(NS, "svg"); sv.setAttribute("width", 40); sv.setAttribute("height", 14);
+    sv.setAttribute("width", 48); stanceMark(sv, 24, 7, 46, 10, "3", "var(--cool)"); li.appendChild(sv); li.append("Israel/Gaza: position from unconditional support (left) to with Sanders (right)"); ul.appendChild(li); } mk("unclear", "", "nothing found either way");
+  host.appendChild(ul);
+}
+function chart5(host) {
+  host.innerHTML = "";
+  legend5(host);
+  const holder = document.createElement("div"); host.appendChild(holder);
+  const w = host.clientWidth, wide = w >= 640;
+  const labelW = wide ? 150 : 78;
+  const nItems = GROUPS.reduce((s, gp) => s + gp.items.reduce((t, it) => t + (it[2] || 1), 0), 0);
+  const gapG = wide ? 14 : 7;
+  const cell = Math.min(30, (w - labelW - 8 - gapG * (GROUPS.length - 1)) / nItems);
+  const sq = Math.max(8, Math.min(16, cell - 4));
+  const headH = wide ? 172 : 140, rowH = Math.max(wide ? 26 : 20, sq + 6);
+  const score = d => d.policy + d.ig + d.orgs;
+  const rows = [...DATA].sort((p, q) => score(q) - score(p) || q.message - p.message || q.sanders - p.sanders || p.st.localeCompare(q.st));
+  const footH = 2 * rowH + 34;
+  const h = headH + rows.length * rowH + footH;
+  const svg = svgIn(holder, w, h), g = el("g", {}, svg);
+  // column positions
+  const colX = []; let x = labelW + 8;
+  GROUPS.forEach((gp, gi) => {
+    const gx0 = x;
+    gp.items.forEach(([k, lab, span = 1]) => { colX.push({ k, lab, x: x + span * cell / 2, gi, span }); x += span * cell; });
+    const gx1 = x;
+    el("line", { x1: gx0 + 2, x2: gx1 - 2, y1: headH - 8, y2: headH - 8, stroke: "var(--axis)" }, g);
+    gp.x0 = gx0; gp.x1 = gx1;
+    x += gapG;
+  });
+  colX.forEach(c => {
+    const t = txt(g, c.x + 3, headH - 14, wide ? c.lab : c.lab.replace("Supportive → with Sanders", "Supp. → Sanders").replace("Called for ", "").replace("Condition/block arms", "Condition arms").replace("Progressive Caucus PAC", "CPC PAC").replace("Overturn Citizens Utd.", "End Citizens Utd.").replace("Against ", "Anti-"), "colh", "start",
+      { transform: wide ? `rotate(-55 ${c.x + 3} ${headH - 14})` : `rotate(-90 ${c.x + 4} ${headH - 14})`, ...(wide ? {} : { x: c.x + 4, style: "font-size:10.5px" }) });
+  });
+  // group heads go in the label column area, above rows, aligned left of each group block on wide
+  // shade the message block to point at it
+  const mg = GROUPS[0];
+  el("rect", { x: mg.x0 - 1, y: headH - 4, width: mg.x1 - mg.x0 + 2, height: rows.length * rowH + 8, rx: 5, fill: "rgba(213,221,230,.04)" }, g);
+  GROUPS.forEach(gp => txt(g, gp.x0 + 2, 12, wide ? gp.head : { "Message": "Msg", "Sanders policies": "Policies", "Israel / Gaza": "Isr/Gaza", "Progressive groups": "Groups" }[gp.head], "grouphead", "start", { style: wide ? "" : "font-size:10.5px" }));
+  rows.forEach((d, i) => {
+    const y = headH + i * rowH + rowH / 2;
+    rowLabel(g, d, labelW, y, wide);
+    colX.forEach(c => {
+      const code = (d.codes || {})[c.k] || { v: "unclear", ev: "", url: "" };
+      const v = VAL[code.v] || "unclear";
+      const a = el(code.url ? "a" : "g", code.url ? { href: code.url, target: "_blank", rel: "noopener noreferrer", class: "cell" } : { class: "cell" }, g);
+      el("rect", { x: c.x - c.span * cell / 2 + 1, y: y - rowH / 2 + 1, width: c.span * cell - 2, height: rowH - 2, rx: 3, class: "ring", fill: "transparent", stroke: "transparent", "stroke-width": 1.5 }, a);
+      if (c.k === "ig_stance") stanceMark(a, c.x, y, c.span * cell - 6, sq, code.v, col(d));
+      else cellMark(a, c.x, y, sq, v, col(d));
+      bindTipHTML(a, () => `<span class="head">${d.st} · ${d.cand}</span>${c.k === "ig_stance" ? `Israel/Gaza stance: <b>${STANCE[code.v] || "no public record"}</b>` : `${c.lab}: <b>${VALTEXT[code.v] || v}</b>`}${code.ev ? `<br>${code.ev.replace(/</g, "&lt;")}` : ""}${code.url ? `<br><span style="color:var(--muted)">${new URL(code.url).hostname.replace("www.", "")} · click to open</span>` : (code.note ? `<br><span style="color:var(--muted)">${code.note.replace(/</g, "&lt;")}</span>` : "")}`,
+        `${d.cand}, ${c.lab}: ${v}`, !code.url);
+    });
+  });
+  // footer: counts of yes per column, picks vs others
+  const fy = headH + rows.length * rowH + 12;
+  el("line", { x1: 0, x2: w, y1: fy - 4, y2: fy - 4, stroke: "var(--rule)" }, g);
+  [[S, "Sanders picks", "hot"], [O, "others", "cool"]].forEach(([set, lab, cls], k) => {
+    const y = fy + k * rowH + rowH / 2;
+    txt(g, labelW, y + 4, wide ? `${lab}, yes` : (k ? "others" : "picks"), cls === "hot" ? "lbl hot" : "lbl", "end");
+    colX.forEach(c => {
+      if (c.k === "ig_stance") {
+        const known = set.map(d => ((d.codes || {})[c.k] || {}).v).filter(v => /^[0-4]$/.test(v)).map(Number);
+        const nR = known.filter(v => v >= 3).length;
+        txt(g, c.x, y + 4, `${nR} of ${set.length}`, "num", "middle", { style: `font-size:${wide ? 12 : 10}px` });
+        return;
+      }
+      const vs = set.map(d => VAL[((d.codes || {})[c.k] || {}).v]);
+      const nY = vs.filter(v => v === "yes").length, nP = vs.filter(v => v === "part").length;
+      txt(g, c.x, y + 4, nP ? `${nY}+${nP}` : `${nY}`, "num", "middle", { style: `font-size:${wide ? 12 : (nP ? 9 : 10.5)}px` });
+    });
+  });
+  txt(g, w, h - 4, wide ? `Counts of yes (+ part way). Israel/Gaza: how many would restrict arms to Israel (the two right-hand positions).` : `Isr/Gaza: how many would restrict arms`, "tick", "end");
+}
+
+// ---------- Chart 6: alignment vs performance, small multiples
+function chart6(host) {
+  const w = host.clientWidth, wide = w >= 640;
+  const dims = [["policy", "Sanders policies", 4], ["ig", "Israel / Gaza stance", 4]];
+  const outs = [["resid", "vs. expected (Harris)", d => d.resid], ["peers", "vs. similar seats", d => d.vsPeers]];
+  const gap = wide ? 34 : 16, cols = 2;
+  const pw = (w - gap) / cols, ph = wide ? 210 : 170;
+  const headH = 76, rowGap = 30, colHead = 26;
+  const h = colHead + dims.length * (headH + ph + rowGap);
+  const svg = svgIn(host, w, h), g = el("g", {}, svg);
+  outs.forEach((o, ci) => txt(g, ci * (pw + gap), 14, o[1], "grouphead", "start"));
+  const lim = 12;
+  dims.forEach(([k, lab, max], ri) => {
+    outs.forEach(([ok, olab, f], ci) => {
+      const ox = ci * (pw + gap), oy = colHead + ri * (headH + ph + rowGap);
+      const st = STATS[`${k}|${ok}|all`] || {}, so = STATS[`${k}|${ok}|others`] || {};
+      const m = { l: wide ? 34 : 28, r: 8, t: headH, b: 22 };
+      const X = v => ox + m.l + (v + .5) / (max + 1) * (pw - m.l - m.r);
+      const Y = v => oy + m.t + (lim - Math.max(-lim, Math.min(lim, v))) / (2 * lim) * (ph - m.b);
+      txt(g, ox, oy + 16, lab, "paneltitle", "start");
+      const rs = v => (v < 0 ? "−" : "+") + Math.abs(v).toFixed(2);
+      txt(g, ox, oy + 36, `r ${rs(st.r)}`, "panelr", "start");
+      txt(g, ox + (wide ? 74 : 66), oy + 36, wide ? `90% range ${rs(st.lo)} to ${rs(st.hi)} · p ${st.p.toFixed(2)}` : `${rs(st.lo)} to ${rs(st.hi)}`, "panels", "start");
+      txt(g, ox, oy + 53, `others only: r ${rs(so.r)}${wide ? ` (p ${so.p.toFixed(2)})` : ""}`, "panels", "start");
+      for (let v = -lim; v <= lim; v += (wide ? 6 : 12)) {
+        el("line", { x1: X(-.5), x2: X(max + .5), y1: Y(v), y2: Y(v), stroke: v ? "var(--grid)" : "var(--axis)" }, g);
+        txt(g, X(-.5) - 6, Y(v) + 4, v ? sgn(v).replace(".0", "") : "0", "tick", "end");
+      }
+      for (let v = 0; v <= max; v++) txt(g, X(v), oy + m.t + ph - m.b + 16, String(v), "tick", "middle");
+      txt(g, X(max + .5), oy + m.t + ph - m.b + 16, `/ ${max}`, "tick", "start", { dx: 2 });
+      // fitted line across all 16
+      const xs = DATA.map(d => d[k]), ys = DATA.map(f);
+      const mxx = xs.reduce((a, b) => a + b, 0) / xs.length, myy = ys.reduce((a, b) => a + b, 0) / ys.length;
+      const bb = xs.reduce((s, x, i) => s + (x - mxx) * (ys[i] - myy), 0) / (xs.reduce((s, x) => s + (x - mxx) ** 2, 0) || 1);
+      el("line", { x1: X(0), y1: Y(myy + bb * (0 - mxx)), x2: X(max), y2: Y(myy + bb * (max - mxx)), stroke: "var(--fit)", "stroke-width": 1.5, opacity: .6 }, g);
+      // dots, spread within each score column
+      const byScore = {};
+      [...DATA].sort((p, q) => p.sanders - q.sanders).forEach(d => {
+        const v = d[k]; (byScore[v] = byScore[v] || []).push(d);
+      });
+      Object.entries(byScore).forEach(([v, arr]) => {
+        const sorted = [...arr].sort((p, q) => f(p) - f(q));
+        sorted.forEach((d, j) => {
+          const spread = Math.min(.22, .08 * (arr.length - 1));
+          const xx = X(+v + (arr.length > 1 ? ((j % 3) - 1) * spread : 0));
+          const yy = Y(f(d));
+          dot(g, xx, yy, d, wide ? 4.5 : 3.8);
+          bindTipHTML(el("circle", { cx: xx, cy: yy, r: 9, class: "hit" }, g),
+            () => `<span class="head">${d.st} · ${d.cand}${d.sanders ? " · Sanders-endorsed" : ""}</span>${lab}: <b>${d[k]} of ${max}</b><br>${olab}: <b>${sgn(f(d))}</b>`,
+            `${d.cand}: ${lab} ${d[k]} of ${max}; ${olab} ${sgn(f(d))}`);
+        });
+      });
+    });
+  });
+}
+
+// ---------- table
+(function () {
+  const t = document.getElementById("tbl");
+  const r2 = 1 - DATA.reduce((s, d) => s + d.resid ** 2, 0) / DATA.reduce((s, d) => s + (d.m26 - my) ** 2, 0);
+  t.innerHTML = `<thead><tr><th>State</th><th>2026 candidate</th><th>2026</th><th>Harris 2024</th><th>Raw gap</th><th>vs. expected</th><th>Last race</th><th>Swing</th><th>vs. similar seats</th></tr></thead><tbody>` +
+    [...DATA].sort((p, q) => q.resid - p.resid).map(d =>
+      `<tr class="${d.sanders ? "hot" : ""}"><td>${d.st}</td><td>${d.cand}${d.party === "I" ? " (I)" : ""}${d.status === "incomplete" ? " †" : ""}</td>
+       <td>${fmt(d.m26)}</td><td>${fmt(d.harris)}</td><td>${sgn(d.raw)}</td><td>${sgn(d.resid)}</td>
+       <td>${fmt(d.prior)} (${d.prior_year})</td><td>${sgn(d.swing)}</td><td>${sgn(d.vsPeers)}</td></tr>`).join("") +
+    `</tbody><caption>Orange dot: Sanders-endorsed. † Count incomplete at retrieval; * in the charts marks Alaska, about 74% counted. Expected = ${A.toFixed(1)} + ${B.toFixed(2)} × Harris margin (R² ${r2.toFixed(2)}). Similar seats = same group by who won the last race.</caption>`;
+})();
+
+(function () {
+  const t = document.getElementById("tbl2");
+  t.innerHTML = `<thead><tr><th>State</th><th>2026 candidate</th><th>Sanders endorsed</th><th>Rating Apr 2025</th><th>Rating when endorsed</th><th>Final rating</th><th>Message /3</th><th>Policies /4</th><th>Israel/Gaza stance /4</th><th>Groups /3</th></tr></thead><tbody>` +
+    [...DATA].sort((p, q) => (q.policy + q.ig + q.orgs) - (p.policy + p.ig + p.orgs)).map(d =>
+      `<tr class="${d.sanders ? "hot" : ""}"><td>${d.st}</td><td>${d.cand}</td><td>${d.sanders ? `${d.endorse_date} (${d.endorse_stage})` : "no"}</td>
+       <td>${ratingOn(d, FIRST)}</td><td>${d.sanders ? ratingOn(d, d.endorse_date) : "–"}</td><td>${d.rating_final}</td><td>${d.message}</td><td>${d.policy}${d.policy_unclear ? ` (${d.policy_unclear} unclear)` : ""}</td>
+       <td>${d.ig}</td><td>${d.orgs}</td></tr>`).join("") +
+    `</tbody><caption>Scores count "yes" values. Groups excludes Justice Democrats and the Progressive Caucus PAC, which endorsed only House candidates. Ratings: Sabato's Crystal Ball. Every value with its evidence and source is in data/alignment/alignment_final.csv.</caption>`;
+})();
+
+// ---------- render + responsive redraw
+const charts = [["c1", chart1], ["c2", chart2], ["c3", chart3], ["c3b", chart3b], ["c4", chart4], ["c5", chart5], ["c6", chart6]];
+function renderAll(first) {
+  charts.forEach(([id, fn]) => fn(document.getElementById(id), false));
+  if (first) {
+    [["c2", chart2], ["c3", chart3], ["c3b", chart3b]].forEach(([id, fn]) => onFirstView(id, () => fn(document.getElementById(id), true)));
+  }
+}
+renderAll(true);
+let lastW = innerWidth, raf;
+addEventListener("resize", () => {
+  if (Math.abs(innerWidth - lastW) < 2) return;
+  lastW = innerWidth; cancelAnimationFrame(raf); raf = requestAnimationFrame(() => renderAll(false));
+});
+</script>
+</body>
+</html>

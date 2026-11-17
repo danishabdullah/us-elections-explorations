@@ -1,0 +1,43 @@
+[project]
+name = "midterms"
+version = "0.1.0"
+description = "Verified, cited election data for every U.S. Senate seat, built to put the 2026 midterms in historical context."
+readme = "README.md"
+requires-python = ">=3.15"
+dependencies = [
+    "httpx>=0.28",
+    "pydantic>=2.12",
+    "typer>=0.20",
+]
+
+[project.scripts]
+midterms = "midterms.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=9",
+    "ruff>=0.14",
+    "pyright>=1.1.400",
+]
+
+[build-system]
+requires = ["uv_build>=0.9,<1"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 120
+target-version = "py315"
+extend-exclude = ["legacy"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.pyright]
+include = ["src", "tests"]
+pythonVersion = "3.15"
+typeCheckingMode = "standard"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"

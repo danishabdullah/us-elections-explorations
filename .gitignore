@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Rebuilt from sources by `midterms build`; the committed record is data/export/ and data/manual/.
+data/midterms.sqlite
+data/midterms.sqlite-*
+# Raw downloads are cached locally; their URL, retrieval time and SHA-256 are recorded in the database.
+data/raw/
+
+# A global excludes file on this machine ignores /data/; this repo tracks it.
+!/data/
+!*.csv

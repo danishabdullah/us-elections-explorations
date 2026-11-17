@@ -1,0 +1,16 @@
+{
+  "_about": "Senate special elections whose seat class the calendar can't decide: the state didn't hold the seat regularly up that year, so the special could have been for either of its seats. Each entry names the seat by the senator whose vacancy it filled. Every other contest's class follows from the calendar (midterms.seats.class_for_contest).",
+  "specials": [
+    {"state": "AZ", "year": 2020, "class": 3, "vacancy": "John McCain (died 2018); won by Mark Kelly"},
+    {"state": "DE", "year": 2010, "class": 2, "vacancy": "Joe Biden (became vice president 2009); won by Chris Coons"},
+    {"state": "GA", "year": 2000, "class": 3, "vacancy": "Paul Coverdell (died 2000); won by Zell Miller"},
+    {"state": "HI", "year": 1990, "class": 1, "vacancy": "Spark Matsunaga (died 1990); won by Daniel Akaka"},
+    {"state": "HI", "year": 2014, "class": 3, "vacancy": "Daniel Inouye (died 2012); won by Brian Schatz"},
+    {"state": "IN", "year": 1990, "class": 3, "vacancy": "Dan Quayle (became vice president 1989); won by Dan Coats"},
+    {"state": "MO", "year": 2002, "class": 1, "vacancy": "Mel Carnahan, elected posthumously in 2000; won by Jim Talent"},
+    {"state": "OK", "year": 1994, "class": 2, "vacancy": "David Boren (resigned 1994); won by Jim Inhofe"},
+    {"state": "WV", "year": 2010, "class": 1, "vacancy": "Robert Byrd (died 2010); won by Joe Manchin"},
+    {"state": "FL", "year": 2026, "class": 3, "vacancy": "Marco Rubio (became secretary of state 2025); appointee Ashley Moody"},
+    {"state": "OH", "year": 2026, "class": 3, "vacancy": "JD Vance (became vice president 2025); appointee Jon Husted"}
+  ]
+}
