@@ -4,12 +4,15 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-# Rebuilt from sources by `midterms build`; the committed record is data/export/ and data/manual/.
+# Rebuilt in seconds by `midterms build` from data/raw and data/manual, both committed.
 data/midterms.sqlite
 data/midterms.sqlite-*
-# Raw downloads are cached locally; their URL, retrieval time and SHA-256 are recorded in the database.
-data/raw/
+# Downloads stored under a hash of their URL are scratch; named source files in data/raw are committed.
+data/raw/**/*.bin
+data/raw/**/[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f].json
 
 # A global excludes file on this machine ignores /data/; this repo tracks it.
 !/data/
 !*.csv
+# Dataverse guestbook answers (personal details); never committed.
+guestbook.local.json

@@ -1,0 +1,38 @@
+{
+ "00": [
+  {
+   "year": 2020,
+   "stage": "gen",
+   "special": 0,
+   "contest_id": "2020-house-DC-00-gen",
+   "dem_candidate": "ELEANOR HOLMES NORTON",
+   "dem_party": "DEMOCRAT",
+   "dem_votes": 281831,
+   "rep_candidate": null,
+   "rep_votes": null,
+   "total_votes": 344144,
+   "dem_margin_pct": null,
+   "primary_collection": "medsl",
+   "checked_by": "",
+   "agreement": "single source",
+   "notes": ""
+  },
+  {
+   "year": 2024,
+   "stage": "gen",
+   "special": 0,
+   "contest_id": "2024-house-DC-00-gen",
+   "dem_candidate": "ELEANOR HOLMES NORTON",
+   "dem_party": "DEMOCRAT",
+   "dem_votes": 251540,
+   "rep_candidate": "MYRTLE PATRICIA ALEXANDER",
+   "rep_votes": 19765,
+   "total_votes": 314069,
+   "dem_margin_pct": 73.8,
+   "primary_collection": "medsl",
+   "checked_by": "",
+   "agreement": "single source",
+   "notes": ""
+  }
+ ]
+}

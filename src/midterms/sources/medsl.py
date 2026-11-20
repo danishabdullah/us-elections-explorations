@@ -5,7 +5,8 @@ against the MD5 that Dataverse publishes. Files behind a Dataverse guestbook (a 
 details) are not fetched: that is a gate for a person to answer, not something to automate.
 
 Known quirks in the source, handled here and recorded in contest notes:
-- stage is written 'gen', 'GEN', 'pre' (a Georgia general that went to a runoff), 'runoff' or 'GEN RUNOFF'.
+- stage is written 'gen', 'GEN', 'pre' (a Georgia general that went to a runoff), 'runoff' or 'GEN RUNOFF'; the
+  House file marks runoffs with runoff=TRUE and writes booleans as TRUE/FALSE/NA.
 - Georgia's Jan 2021 runoffs carry year 2021; they belong to the 2020 cycle.
 - Unnamed rows (scattering, blanks counted as 'OTHER') are summed into one '(other)' line per contest.
 - Louisiana 2002 lists the November primary and the December runoff as one contest; contests with the same
@@ -21,6 +22,8 @@ import sqlite3
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
+
+import httpx
 
 from midterms import db
 from midterms.fetch import Blocked, Fetcher
@@ -45,29 +48,55 @@ DATASETS = {
     "house": Dataset("house", "doi:10.7910/DVN/IG0UN2", "1976-2024-house", "house"),
 }
 
-STAGES = {"gen": "gen", "pre": "gen", "runoff": "runoff", "gen runoff": "runoff"}
+STAGES = {"gen": "gen", "pre": "gen", "runoff": "runoff", "gen runoff": "runoff", "pri": "pri"}
+
+
+def _true(v: str | None) -> bool:
+    """MEDSL writes booleans as True/False (Senate, President) or TRUE/FALSE/NA (House)."""
+    return (v or "").strip().lower() == "true"
 
 
 def _latest_file(fetcher: Fetcher, ds: Dataset) -> tuple[dict, dict]:
-    meta = fetcher.get(f"{DATAVERSE}/api/datasets/:persistentId/?persistentId={ds.doi}", refresh=True)
+    url = f"{DATAVERSE}/api/datasets/:persistentId/?persistentId={ds.doi}"
+    name = f"medsl-{ds.key}-dataset.json"
+    try:  # look for a newer version each build; work offline from the committed copy if Dataverse is unreachable
+        meta = fetcher.get(url, refresh=True, name=name)
+    except httpx.TransportError:
+        meta = fetcher.get(url, name=name)
     version = json.loads(meta.path.read_bytes())["data"]["latestVersion"]
     f = next(f["dataFile"] for f in version["files"] if f["dataFile"]["filename"].startswith(ds.filename_prefix))
     return version, f
 
 
-def fetch(fetcher: Fetcher, key: str, *, refresh: bool = False) -> tuple[Path, Source]:
+def fetch(
+    fetcher: Fetcher, key: str, *, refresh: bool = False, guestbook: dict[str, str] | None = None
+) -> tuple[Path, Source]:
+    """Download a dataset file. If Dataverse asks for a guestbook response, answer it with `guestbook` (name, email,
+    institution, position) through Dataverse's documented access API, which returns a one-time signed URL."""
     ds = DATASETS[key]
     version, f = _latest_file(fetcher, ds)
-    if f.get("restricted") or version.get("guestbook") or f.get("guestbookId"):
-        raise Blocked(f"{ds.doi} {f['filename']} sits behind a Dataverse guestbook; download it by hand")
+    if f.get("restricted"):
+        raise Blocked(f"{ds.doi} {f['filename']} is restricted")
     url = f"{DATAVERSE}/api/access/datafile/{f['id']}?format=original"
     md5 = f.get("md5") or (f.get("checksum") or {}).get("value")
-    dl = fetcher.get(url, refresh=refresh, expect_md5=md5)
+    vno = f"{version['versionNumber']}.{version['versionMinorNumber']}"
+    name = f"medsl-v{vno}-{f.get('originalFileName') or f['filename']}"
+    note = ""
+    try:
+        dl = fetcher.get(url, refresh=refresh, expect_md5=md5, name=name)
+    except Blocked as e:
+        if "guestbook" not in str(e).lower():
+            raise
+        if not guestbook:
+            raise Blocked(f"{ds.doi} needs a guestbook response; set it in guestbook.local.json (see README)") from e
+        reply = fetcher.post_json(url, {"guestbookResponse": guestbook})
+        signed = reply["data"]["signedUrl"]
+        dl = fetcher.get(signed, refresh=True, expect_md5=md5, cache_key=url, name=name)
+        note = "; guestbook answered through the Dataverse access API"
     head = dl.path.read_bytes()[:2000]
     if head.startswith(b'{"status":"ERROR"'):
         dl.path.unlink()
         raise Blocked(f"{ds.doi}: {json.loads(head).get('message', 'Dataverse refused the download')}")
-    vno = f"{version['versionNumber']}.{version['versionMinorNumber']}"
     src = Source(
         source_id=f"medsl-{key}-v{vno}",
         kind="dataset",
@@ -77,7 +106,7 @@ def fetch(fetcher: Fetcher, key: str, *, refresh: bool = False) -> tuple[Path, S
         retrieved_at=dl.retrieved_at,
         sha256=dl.sha256,
         raw_path=str(dl.path.relative_to(fetcher.raw_dir)),
-        notes=f"MD5 checked against Dataverse: {md5}",
+        notes=f"MD5 checked against Dataverse: {md5}{note}",
     )
     return dl.path, src
 
@@ -86,7 +115,9 @@ def _contest(office: str, r: dict, overrides: dict[tuple[str, int, str], int]) -
     """Build the contest; returns None for a Senate special whose seat class needs an override that is missing."""
     state, year = r["state_po"], int(r["year"])
     stage = STAGES[(r.get("stage") or "gen").strip().lower()]
-    special = (r.get("special") or "False") == "True"
+    if _true(r.get("runoff")):  # House file: runoffs are stage GEN with runoff TRUE
+        stage = "runoff"
+    special = _true(r.get("special"))
     if office == "pres":
         return Contest(office="pres", state=state, year=year)
     base = {"state": state, "year": year, "stage": stage, "special": special}
@@ -128,20 +159,26 @@ def parse(
         by: dict[tuple[str, str], int] = defaultdict(int)
         seen: dict[tuple[str, str], int] = defaultdict(int)
         meta: dict[tuple[str, str], dict] = {}
+        problems = []
+        if any(float(r["candidatevotes"] or 0) < 0 or float(r["totalvotes"] or 0) < 0 for r in rs):
+            # MEDSL writes -1 where no votes were tallied (e.g. Florida doesn't print unopposed House races)
+            problems.append("medsl: no votes tallied (-1 in source; typically an unopposed race)")
+            rs = [r for r in rs if float(r["candidatevotes"] or 0) > 0]
         for r in rs:
-            name = r["candidate"].strip() or "(other)"
+            name = r["candidate"].strip()
+            name = "(other)" if name in ("", "WRITEIN") else name
             party = (r.get("party_detailed") or r.get("party") or "").strip()
+            party = "" if party == "NA" else party
             k = (name, party)
             by[k] += int(float(r["candidatevotes"] or 0))
             seen[k] += 1
             meta[k] = r
-        problems = []
         if any(n > 1 and k[0] != "(other)" for k, n in seen.items()):
             problems.append("medsl: duplicate candidate rows (likely two rounds merged)")
-        listed = {int(float(r["totalvotes"])) for r in rs if r["totalvotes"]}
+        listed = {int(float(r["totalvotes"])) for r in rs if r["totalvotes"] and float(r["totalvotes"]) > 0}
         if len(listed) > 1:
             problems.append(f"medsl: inconsistent totals {sorted(listed)}")
-        unofficial = any((r.get("unofficial") or "False") == "True" for r in rs)
+        unofficial = any(_true(r.get("unofficial")) for r in rs)
         rows = []
         for (name, party), v in by.items():
             m = meta[(name, party)]
@@ -156,7 +193,7 @@ def parse(
                     candidate=name,
                     party=party,
                     party_simplified=simple,
-                    writein=(m.get("writein") or "False") == "True",
+                    writein=_true(m.get("writein")),
                     votes=v,
                     status="unofficial" if unofficial else "certified",
                 )
@@ -179,7 +216,9 @@ def parse(
 
 
 NONVOTE = "NONVOTE"
-NON_VOTES = re.compile(r"^(BLANK VOTES?|BLANK VOTE/VOID VOTE|BLANKS|OVER ?VOTES?|UNDER ?VOTES?|VOID VOTES?|SPOILED)$")
+NON_VOTES = re.compile(
+    r"^(BLANK|BLANK VOTES?|BLANK VOTE/VOID VOTE|BLANKS|OVER ?VOTES?|UNDER ?VOTES?|VOID VOTES?|SPOILED)$"
+)
 MIXED_BLANKS = re.compile(r"^BLANK VOTE.*SCATTER")
 
 

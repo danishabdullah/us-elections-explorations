@@ -26,6 +26,12 @@ def _overrides() -> dict[tuple[str, int, str], int]:
     return medsl.load_overrides(OVERRIDES)
 
 
+def _guestbook() -> dict[str, str] | None:
+    """Dataverse guestbook answers from guestbook.local.json (git-ignored): name, email, institution, position."""
+    p = ROOT / "guestbook.local.json"
+    return json.loads(p.read_text()) if p.exists() else None
+
+
 @app.command()
 def fetch(
     dataset: Annotated[str, typer.Argument(help="senate, president, house or all")] = "all",
@@ -35,7 +41,7 @@ def fetch(
     f = Fetcher(DATA / "raw")
     for key in medsl.DATASETS if dataset == "all" else [dataset]:
         try:
-            path, src = medsl.fetch(f, key, refresh=refresh)
+            path, src = medsl.fetch(f, key, refresh=refresh, guestbook=_guestbook())
             typer.echo(f"{key}: {src.title} -> {path.relative_to(ROOT)}")
         except Blocked as e:
             typer.secho(f"{key}: not fetched: {e}", fg="yellow")
@@ -51,7 +57,7 @@ def build(refresh: Annotated[bool, typer.Option(help="Re-download MEDSL files")]
     f = Fetcher(DATA / "raw")
     for key in medsl.DATASETS:
         try:
-            path, src = medsl.fetch(f, key, refresh=refresh)
+            path, src = medsl.fetch(f, key, refresh=refresh, guestbook=_guestbook())
         except Blocked as e:
             typer.secho(f"{key}: skipped: {e}", fg="yellow")
             continue
@@ -104,6 +110,15 @@ def export(con: sqlite3.Connection | None = None) -> None:
                             WHERE c.office = 'pres' ORDER BY c.state, c.year"""):
         pres.setdefault(r["state"], {})[r["year"]] = {k: v for k, v in dict(r).items() if k not in ("state", "year")}
     (out / "president.json").write_text(json.dumps(pres, indent=1, ensure_ascii=False) + "\n")
+    house: dict[str, dict[str, list[dict]]] = {}
+    for r in con.execute("""SELECT c.state, c.district, c.year, c.stage, c.special, f.* FROM contests c
+                            JOIN contest_final f USING (contest_id) WHERE c.office = 'house'
+                            ORDER BY c.state, c.district, c.year, c.stage"""):
+        row = {k: v for k, v in dict(r).items() if k not in ("state", "district")}
+        house.setdefault(r["state"], {}).setdefault(r["district"], []).append(row)
+    (out / "house").mkdir(exist_ok=True)
+    for st, districts in house.items():
+        (out / "house" / f"{st}.json").write_text(json.dumps(districts, indent=1, ensure_ascii=False) + "\n")
 
 
 @app.command()

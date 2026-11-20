@@ -50,10 +50,12 @@ class Fetcher:
         self._last: dict[str, float] = {}
         self._robots: dict[str, RobotFileParser] = {}
 
-    def _paths(self, url: str) -> tuple[Path, Path]:
+    def _paths(self, url: str, name: str | None = None) -> tuple[Path, Path]:
         host = urlparse(url).netloc
-        key = hashlib.sha256(url.encode()).hexdigest()[:16]
-        base = self.raw_dir / host / key
+        if name:  # a readable file name for files worth keeping in the repo
+            body = self.raw_dir / host / name
+            return body, body.with_name(body.name + ".meta.json")
+        base = self.raw_dir / host / hashlib.sha256(url.encode()).hexdigest()[:16]
         return base.with_suffix(".bin"), base.with_suffix(".json")
 
     def _allowed(self, url: str) -> bool:
@@ -75,11 +77,33 @@ class Fetcher:
             time.sleep(self.min_delay - gap)
         self._last[host] = time.monotonic()
 
-    def get(self, url: str, *, refresh: bool = False, expect_md5: str | None = None) -> Download:
-        body_path, meta_path = self._paths(url)
+    def post_json(self, url: str, payload: dict) -> dict:
+        """POST a JSON body (e.g. a Dataverse guestbook response) and return the JSON reply. Never cached."""
+        if not self._allowed(url):
+            raise Blocked(f"robots.txt disallows {url}")
+        self._wait(urlparse(url).netloc)
+        r = self.client.post(url, json=payload)
+        if r.status_code in BLOCK_STATUSES:
+            raise Blocked(f"{url} returned HTTP {r.status_code}")
+        r.raise_for_status()
+        return r.json()
+
+    def get(
+        self,
+        url: str,
+        *,
+        refresh: bool = False,
+        expect_md5: str | None = None,
+        cache_key: str | None = None,
+        name: str | None = None,
+    ) -> Download:
+        """Fetch url. cache_key names the cache entry when url is one-off (e.g. a signed URL with a token);
+        name stores the body under a readable file name."""
+        key = cache_key or url
+        body_path, meta_path = self._paths(key, name)
         if body_path.exists() and meta_path.exists() and not refresh:
             meta = json.loads(meta_path.read_text())
-            return Download(url, body_path, meta["sha256"], meta["retrieved_at"], from_cache=True)
+            return Download(key, body_path, meta["sha256"], meta["retrieved_at"], from_cache=True)
         if not self._allowed(url):
             raise Blocked(f"robots.txt disallows {url}")
         host = urlparse(url).netloc
@@ -109,8 +133,12 @@ class Fetcher:
         if expect_md5 and hashlib.md5(r.content).hexdigest() != expect_md5:
             raise ValueError(f"{url}: checksum does not match the publisher's MD5 {expect_md5}")
         sha = hashlib.sha256(r.content).hexdigest()
+        if body_path.exists() and meta_path.exists():
+            old = json.loads(meta_path.read_text())
+            if old["sha256"] == sha:  # unchanged since first retrieval: keep the files (and the repo) as they are
+                return Download(key, body_path, sha, old["retrieved_at"], from_cache=False)
         now = datetime.now(UTC).isoformat(timespec="seconds")
         body_path.parent.mkdir(parents=True, exist_ok=True)
         body_path.write_bytes(r.content)
-        meta_path.write_text(json.dumps({"url": url, "sha256": sha, "retrieved_at": now, "status": r.status_code}))
-        return Download(url, body_path, sha, now, from_cache=False)
+        meta_path.write_text(json.dumps({"url": key, "sha256": sha, "retrieved_at": now, "status": r.status_code}))
+        return Download(key, body_path, sha, now, from_cache=False)

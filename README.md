@@ -1,13 +1,14 @@
 # midterms-2026
 
-Verified, cited election results for every U.S. Senate seat, 1976 to 2026, built to put the 2026 midterms in
-historical context. Every value records where it came from and which independent collection produced it.
+Verified, cited election results for every U.S. Senate seat, 1976 to 2026, plus every presidential and House race
+since 1976, built to put the 2026 midterms in historical context. Every value records where it came from and which
+independent collection produced it.
 
 ## Quick start
 
 ```bash
 uv sync
-uv run midterms build      # download (cached), load, reconcile, export
+uv run midterms build      # load the committed sources, check Dataverse for newer versions, reconcile, export
 uv run midterms status     # coverage for the 35 seats up in 2026
 uv run pytest
 ```
@@ -20,6 +21,7 @@ Requires Python 3.15 and [uv](https://docs.astral.sh/uv/).
 |---|---|---|
 | Senate results | MIT Election Data and Science Lab, *U.S. Senate statewide 1976–2024* (Harvard Dataverse, doi:10.7910/DVN/PEJ5QU) | every general and runoff, all 100 seats |
 | Presidential results by state | MIT Election Lab, *U.S. President 1976–2024* (doi:10.7910/DVN/42MVDX) | every state and DC |
+| House results by district | MIT Election Lab, *U.S. House 1976–2024* (doi:10.7910/DVN/IG0UN2) | every district, generals and runoffs |
 | 2026 Senate results | reviewed collections in `data/manual/results/` | 16 of 35 seats so far |
 | Candidates' earlier statewide races | reviewed collections | 6 candidates |
 | Sabato's Crystal Ball ratings, 2026 | reviewed collections in `data/manual/ratings/` | 16 seats, full history |
@@ -29,8 +31,19 @@ MIT's datasets are fetched in one go through the Dataverse API, which also suppl
 file's MD5, checked on download. They are the primary source wherever they cover a contest. 2026 isn't in them yet:
 MIT adds a cycle after states certify.
 
-**House results are not downloaded.** Dataverse puts that file behind a guestbook, a form for a person to fill in,
-so the fetcher stops there. Download `1976-2024-house.tab` by hand if you need it.
+**The source files are committed** in `data/raw/dataverse.harvard.edu/`, named by dataset version, each with a
+`.meta.json` recording its URL, retrieval time and SHA-256. A build works offline from them; online, it checks
+Dataverse for a newer version and downloads only if one exists.
+
+**House guestbook.** Dataverse asks for a guestbook response (name, email, institution, position) before releasing
+the House file. The fetcher answers it through Dataverse's documented access API, using details you put in
+`guestbook.local.json` at the repo root (git-ignored):
+
+```json
+{"name": "...", "email": "...", "institution": "...", "position": "..."}
+```
+
+Without that file the House download is skipped with a message; the committed copy is still used.
 
 ## Design
 
@@ -63,6 +76,8 @@ so the fetcher stops there. Download `1976-2024-house.tab` by hand if you need i
 - Party labels: `party_detailed` beginning with DEMOCRAT or REPUBLICAN is relabelled by rule; the few rows with no
   label at all are fixed in `data/medsl_fixes.json`.
 - Louisiana 2002 lists the November primary and December runoff as one contest; it is flagged in notes.
+- The House file writes booleans as TRUE/FALSE/NA, marks runoffs with `runoff=TRUE`, and uses -1 where no votes
+  were tallied (Florida doesn't print unopposed races); those contests are kept with a note and no margin.
 - Odd-year specials before 2021 (e.g. Massachusetts 2010 and 2013, New Jersey 2013, Alabama 2017) aren't in MIT's
   file.
 
@@ -78,7 +93,8 @@ then rebuild. Disagreements show up in `contest_final.agreement` and in `midterm
 src/midterms/      seats, models, schema, db, fetch, reconcile, cli, sources/{medsl,manual}
 data/manual/       reviewed collections (committed)
 data/export/       one JSON per seat with its full history, plus president.json (committed)
-data/raw/          cached downloads (ignored)
+data/raw/          MIT's source files and Dataverse metadata, with download records (committed)
+data/export/house/ one JSON per state, House results by district (committed)
 data/midterms.sqlite   the database (ignored; rebuilt by `midterms build`)
 legacy/first-analysis/ the original 16-race page, its scripts and data
 scripts/convert_session_data.py  how data/manual was produced from that analysis
