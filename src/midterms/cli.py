@@ -12,7 +12,7 @@ import typer
 from midterms import db, reconcile
 from midterms.fetch import Blocked, Fetcher
 from midterms.seats import STATES, seats, seats_up
-from midterms.sources import manual, medsl
+from midterms.sources import manual, medsl, positions
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "data"
@@ -67,8 +67,11 @@ def build(refresh: Annotated[bool, typer.Option(help="Re-download MEDSL files")]
         typer.echo(f"{p.name}: {manual.load_results(con, p, ov)} result rows")
     for p in sorted((DATA / "manual" / "ratings").glob("*.csv")):
         typer.echo(f"{p.name}: {manual.load_ratings(con, p, ov)} ratings")
-    for p in sorted((DATA / "manual" / "positions").glob("*.csv")):
-        typer.echo(f"{p.name}: {manual.load_positions(con, p, ov)} positions")
+    for folder in sorted(p for p in (DATA / "manual" / "positions").iterdir() if p.is_dir()):
+        counts = positions.load_cycle(con, folder, ov)
+        typer.echo(f"positions {folder.name}: {sum(counts.values())} rows from {len(counts)} collections")
+    for p in sorted((DATA / "manual" / "candidates").glob("*.csv")):
+        typer.echo(f"candidates {p.stem}: {positions.load_candidates(con, p, ov)}")
     typer.echo(f"reconciled: {reconcile.run(con, DATA / 'manual' / 'primary.json')}")
     export(con)
 
@@ -116,9 +119,66 @@ def export(con: sqlite3.Connection | None = None) -> None:
                             ORDER BY c.state, c.district, c.year, c.stage"""):
         row = {k: v for k, v in dict(r).items() if k not in ("state", "district")}
         house.setdefault(r["state"], {}).setdefault(r["district"], []).append(row)
+    _export_positions(con, out / "positions")
     (out / "house").mkdir(exist_ok=True)
     for st, districts in house.items():
         (out / "house" / f"{st}.json").write_text(json.dumps(districts, indent=1, ensure_ascii=False) + "\n")
+
+
+def _export_positions(con: sqlite3.Connection, out: Path) -> None:
+    """One JSON per cycle: per seat, the candidate's facts and, per indicator, the reconciled value with its
+    evidence, what each collection pass recorded, the verifier re-checks, and any author ruling."""
+    out.mkdir(parents=True, exist_ok=True)
+    src = {r["source_id"]: r["url"] for r in con.execute("SELECT source_id, url FROM sources")}
+    for (cycle,) in con.execute("SELECT DISTINCT cycle FROM positions ORDER BY cycle").fetchall():
+        doc: dict[str, dict] = {}
+        for c in con.execute("SELECT * FROM candidates WHERE cycle = ? ORDER BY seat_id", (cycle,)):
+            doc[c["seat_id"]] = {"candidate": c["candidate"], "facts": dict(c), "indicators": {}}
+        for p in con.execute(
+            "SELECT * FROM positions WHERE cycle = ? ORDER BY seat_id, indicator, collection", (cycle,)
+        ):
+            seat = doc.setdefault(p["seat_id"], {"candidate": p["candidate"], "facts": {}, "indicators": {}})
+            ind = seat["indicators"].setdefault(
+                p["indicator"], {"final": None, "passes": {}, "checks": [], "ruling": None}
+            )
+            entry = {
+                "value": p["value"],
+                "detail": p["detail"],
+                "evidence": p["evidence"],
+                "source": src.get(p["source_id"]),
+                "other_sources": p["other_urls"],
+                "source_date": p["source_date"],
+                "notes": p["notes"],
+                "quotes": [
+                    dict(e)
+                    for e in con.execute(
+                        "SELECT quote, url, date FROM position_evidence WHERE position_id = ? ORDER BY ord", (p["id"],)
+                    )
+                ],
+            }
+            if p["collection"] == "reconciled":
+                ind["final"] = entry
+            else:
+                ind["passes"][p["collection"]] = entry
+        for k in con.execute("SELECT * FROM position_checks WHERE cycle = ? AND seat_id IS NOT NULL", (cycle,)):
+            ind = doc[k["seat_id"]]["indicators"].setdefault(
+                k["indicator"], {"final": None, "passes": {}, "checks": [], "ruling": None}
+            )
+            ind["checks"].append(
+                {
+                    "by": k["collection"],
+                    "checked": k["checked_collection"],
+                    "original": k["original_value"],
+                    "verified": k["verified_value"],
+                    "status": k["status"],
+                    "source": src.get(k["source_id"]),
+                    "evidence": k["evidence"],
+                    "notes": k["notes"],
+                }
+            )
+        for r in con.execute("SELECT * FROM rulings WHERE cycle = ?", (cycle,)):
+            doc[r["seat_id"]]["indicators"][r["indicator"]]["ruling"] = {"value": r["value"], "reason": r["reason"]}
+        (out / f"{cycle}.json").write_text(json.dumps(doc, indent=1, ensure_ascii=False) + "\n")
 
 
 @app.command()

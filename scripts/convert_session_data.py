@@ -120,9 +120,28 @@ def convert_positions(al: Path) -> None:
         )
         for r in read(al / "alignment_final.csv")
     ]
-    write(OUT / "positions" / "2026_reconciled.csv", cols, rows)
-    shutil.copy(al / "SCHEMA.md", OUT / "positions" / "SCHEMA.md")
-    print(f"positions: {len(rows)}")
+    out = OUT / "positions" / "2026"
+    write(out / "reconciled.csv", cols, rows)
+    # every collection pass, verifier re-check and ruling, copied as collected
+    for name in PASSES:
+        shutil.copy(al / f"{name}.csv", out / f"{name}.csv")
+    shutil.copy(al / "SCHEMA.md", out / "SCHEMA.md")
+    (OUT / "candidates").mkdir(parents=True, exist_ok=True)
+    shutil.copy(al / "selection.csv", OUT / "candidates" / "2026.csv")
+    print(f"positions: {len(rows)} reconciled values, {len(PASSES)} collection files")
+
+
+# unused_partial_israel_gaza_substance.csv is left out: a stopped collection, superseded by ig_stance_*.
+PASSES = [
+    *(f"positions_{p}" for p in "ABC"),
+    *(f"messaging_{p}" for p in "AB"),
+    *(f"israel_gaza_{p}" for p in "AB"),
+    *(f"health_wage_{p}" for p in ("A", "B", "final", "recent")),
+    *(f"ig_stance_{p}" for p in ("A", "B", "final")),
+    "israel_aid_statements",
+    *(f"verify_{p}" for p in ("A", "BC", "israel_gaza", "messaging")),
+    "rulings",
+]
 
 
 if __name__ == "__main__":

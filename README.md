@@ -25,7 +25,8 @@ Requires Python 3.15 and [uv](https://docs.astral.sh/uv/).
 | 2026 Senate results | reviewed collections in `data/manual/results/` | 16 of 35 seats so far |
 | Candidates' earlier statewide races | reviewed collections | 6 candidates |
 | Sabato's Crystal Ball ratings, 2026 | reviewed collections in `data/manual/ratings/` | 16 seats, full history |
-| Candidate positions, 2026 | `data/manual/positions/` (coding scheme in `SCHEMA.md` there) | 16 candidates |
+| Candidate positions, 2026 | `data/manual/positions/2026/`: every collection pass, verifier re-checks, rulings and reconciled values; coding scheme and its dated revisions in `SCHEMA.md` there | 16 candidates, 23 indicators |
+| Candidate facts, 2026 | `data/manual/candidates/2026.csv`: Sanders endorsement date and stage, contested primary | 16 candidates |
 
 MIT's datasets are fetched in one go through the Dataverse API, which also supplies the latest version and each
 file's MD5, checked on download. They are the primary source wherever they cover a contest. 2026 isn't in them yet:
@@ -87,11 +88,23 @@ Reviewed collections are CSVs in `data/manual/results/<collection>.csv`; the col
 `src/midterms/sources/manual.py`. Collect each contest twice, independently, from different sources (passA, passB),
 then rebuild. Disagreements show up in `contest_final.agreement` and in `midterms status`.
 
+### Positions
+
+Each position was collected at least twice, independently, then re-checked at the sources by a separate verifier.
+The database keeps all of it: `positions` has one row per candidate, indicator and collection (`positions_A`,
+`messaging_B`, `ig_stance_final`, ..., and `reconciled` for the final value); `position_evidence` holds the dated
+quotes behind assessed values; `position_checks` holds each re-check (confirmed, changed or unresolved);
+`rulings` holds values changed under a revised coding rule, with the reason. Old positions are kept; the coding
+scheme says the latest 2025–26 position decides and older evidence stands, marked with its date, when nothing
+newer exists.
+
 ## Layout
 
 ```
 src/midterms/      seats, models, schema, db, fetch, reconcile, cli, sources/{medsl,manual}
 data/manual/       reviewed collections (committed)
+data/export/positions/ one JSON per cycle: per candidate and indicator, the final value with evidence, each pass,
+                   the re-checks and any ruling (committed)
 data/export/       one JSON per seat with its full history, plus president.json (committed)
 data/raw/          MIT's source files and Dataverse metadata, with download records (committed)
 data/export/house/ one JSON per state, House results by district (committed)

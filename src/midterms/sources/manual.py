@@ -10,7 +10,7 @@ dem_* holds the Democrat, or the independent the Democrats backed (dem_party 'IN
 for the office, write-ins included, blanks excluded. Final-round columns are for ranked-choice races (round 99).
 
 Ratings: data/manual/ratings/<rater-slug>_<cycle>_<collection>.csv with state,date,rating,previous_rating,
-source_title,source_url,notes. Positions: data/manual/positions/<cycle>_<collection>.csv.
+source_title,source_url,notes. Positions and candidate facts: see sources/positions.py.
 """
 
 from __future__ import annotations
@@ -182,43 +182,3 @@ def _seat_in_cycle(state: str, cycle: int, overrides: dict[tuple[str, int, str],
     if len(mine) != 1:
         raise LookupError(f"{state} elects {len(mine)} seats in {cycle}; the file must name the seat")
     return mine[0], "calendar"
-
-
-def load_positions(con: sqlite3.Connection, path: Path, overrides: dict[tuple[str, int, str], int]) -> int:
-    cycle, collection = path.stem.split("_", 1)
-    db.add_collection(con, collection, f"reviewed collection {collection}")
-    n = 0
-    for r in _read(path):
-        seat_id, _ = _seat_in_cycle(r["state"], int(cycle), overrides)
-        url = (r.get("source_url") or "").split(" ")[0].strip(" ;")
-        sid = None
-        if url.startswith("http"):
-            sid = db.add_source(
-                con,
-                Source(
-                    source_id=db.source_id_for(url, url),
-                    kind="web",
-                    publisher=r.get("source_publisher") or url.split("/")[2],
-                    title=url,
-                    url=url,
-                ),
-            )
-        con.execute(
-            """INSERT OR REPLACE INTO positions (seat_id, cycle, candidate, indicator, value, evidence, source_date,
-                                                 collection, source_id, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (
-                seat_id,
-                int(cycle),
-                r["candidate"],
-                r["indicator"],
-                r["value"],
-                r.get("evidence", ""),
-                r.get("source_date", ""),
-                collection,
-                sid,
-                r.get("notes", ""),
-            ),
-        )
-        n += 1
-    con.commit()
-    return n

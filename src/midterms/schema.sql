@@ -96,6 +96,8 @@ CREATE TABLE IF NOT EXISTS ratings (
     UNIQUE (seat_id, cycle, rater, date, rating, collection)
 ) STRICT;
 
+-- Candidate positions. Every collection pass is kept (positions_A, messaging_B, ig_stance_final, ...); the
+-- 'reconciled' collection holds the final value per indicator. Coding scheme: data/manual/positions/<cycle>/SCHEMA.md.
 CREATE TABLE IF NOT EXISTS positions (
     id          INTEGER PRIMARY KEY,
     seat_id     TEXT NOT NULL REFERENCES seats (seat_id),
@@ -103,10 +105,65 @@ CREATE TABLE IF NOT EXISTS positions (
     candidate   TEXT NOT NULL,
     indicator   TEXT NOT NULL,
     value       TEXT NOT NULL,
+    detail      TEXT NOT NULL DEFAULT '',    -- e.g. the wage figure ('$20'), or an assessor's confidence
     evidence    TEXT NOT NULL DEFAULT '',
     source_date TEXT NOT NULL DEFAULT '',
+    retrieved   TEXT NOT NULL DEFAULT '',
     collection  TEXT NOT NULL REFERENCES collections (collection),
     source_id   TEXT REFERENCES sources (source_id),
+    other_urls  TEXT NOT NULL DEFAULT '',    -- further sources cited for the same value, ' ; '-joined
     notes       TEXT NOT NULL DEFAULT '',
     UNIQUE (seat_id, cycle, candidate, indicator, collection)
+) STRICT;
+
+-- Dated quotes behind an assessed value (the Israel/Gaza stance cites up to four).
+CREATE TABLE IF NOT EXISTS position_evidence (
+    position_id INTEGER NOT NULL REFERENCES positions (id) ON DELETE CASCADE,
+    ord         INTEGER NOT NULL,
+    quote       TEXT NOT NULL,
+    url         TEXT NOT NULL DEFAULT '',
+    date        TEXT NOT NULL DEFAULT '',
+    PRIMARY KEY (position_id, ord)
+) STRICT;
+
+-- Independent re-checks of a collection's values against the sources.
+CREATE TABLE IF NOT EXISTS position_checks (
+    id                 INTEGER PRIMARY KEY,
+    cycle              INTEGER NOT NULL,
+    collection         TEXT NOT NULL REFERENCES collections (collection),   -- the checker, e.g. 'verify_A'
+    checked_collection TEXT NOT NULL,      -- the pass it checked, e.g. 'positions_A', or 'selection'
+    state              TEXT NOT NULL,      -- a state, or a note such as '(all)' for a check across candidates
+    seat_id            TEXT REFERENCES seats (seat_id),
+    candidate          TEXT NOT NULL DEFAULT '',
+    indicator          TEXT NOT NULL,
+    original_value     TEXT NOT NULL DEFAULT '',
+    verified_value     TEXT NOT NULL DEFAULT '',
+    status             TEXT NOT NULL,      -- confirmed / changed / unresolved
+    source_id          TEXT REFERENCES sources (source_id),
+    evidence           TEXT NOT NULL DEFAULT '',
+    notes              TEXT NOT NULL DEFAULT ''
+) STRICT;
+
+-- Values changed by the author under a revised coding rule, each with its reason.
+CREATE TABLE IF NOT EXISTS rulings (
+    seat_id   TEXT NOT NULL REFERENCES seats (seat_id),
+    cycle     INTEGER NOT NULL,
+    indicator TEXT NOT NULL,
+    value     TEXT NOT NULL,
+    reason    TEXT NOT NULL,
+    PRIMARY KEY (seat_id, cycle, indicator)
+) STRICT;
+
+-- Facts about each candidate's race that aren't positions: endorsements, primaries.
+CREATE TABLE IF NOT EXISTS candidates (
+    seat_id               TEXT NOT NULL REFERENCES seats (seat_id),
+    cycle                 INTEGER NOT NULL,
+    candidate             TEXT NOT NULL,
+    sanders_endorse_date  TEXT NOT NULL DEFAULT '',
+    sanders_endorse_stage TEXT NOT NULL DEFAULT '',
+    contested_primary     TEXT NOT NULL DEFAULT '',
+    primary_result_note   TEXT NOT NULL DEFAULT '',
+    source_notes          TEXT NOT NULL DEFAULT '',
+    retrieved             TEXT NOT NULL DEFAULT '',
+    PRIMARY KEY (seat_id, cycle, candidate)
 ) STRICT;
