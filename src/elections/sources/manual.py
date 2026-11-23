@@ -19,9 +19,9 @@ import csv
 import sqlite3
 from pathlib import Path
 
-from midterms import db
-from midterms.models import Contest, ResultRow, Source, Total
-from midterms.seats import seat_for
+from elections import db
+from elections.models import Contest, ResultRow, Source, Total
+from elections.seats import seat_for
 
 FINAL_ROUND = 99
 COLUMNS = [
@@ -176,7 +176,7 @@ def load_ratings(con: sqlite3.Connection, path: Path, overrides: dict[tuple[str,
 
 def _seat_in_cycle(state: str, cycle: int, overrides: dict[tuple[str, int, str], int]) -> tuple[str, str]:
     """The one seat a state elects in a cycle; ambiguous when it holds both a regular and a special."""
-    from midterms.seats import seats_up
+    from elections.seats import seats_up
 
     mine = [s for s, _ in seats_up(cycle, overrides) if s.startswith(state + "-")]
     if len(mine) != 1:

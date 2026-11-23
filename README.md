@@ -1,4 +1,4 @@
-# midterms-2026
+# us-elections-explorations
 
 Verified, cited election results for every U.S. Senate seat, 1976 to 2026, plus every presidential and House race
 since 1976, built to put the 2026 midterms in historical context. Every value records where it came from and which
@@ -8,8 +8,8 @@ independent collection produced it.
 
 ```bash
 uv sync
-uv run midterms build      # load the committed sources, check Dataverse for newer versions, reconcile, export
-uv run midterms status     # coverage for the 35 seats up in 2026
+uv run elections build      # load the committed sources, check Dataverse for newer versions, reconcile, export
+uv run elections status     # coverage for the 35 seats up in 2026
 uv run pytest
 ```
 
@@ -85,8 +85,8 @@ Without that file the House download is skipped with a message; the committed co
 ## Adding data
 
 Reviewed collections are CSVs in `data/manual/results/<collection>.csv`; the columns are listed in
-`src/midterms/sources/manual.py`. Collect each contest twice, independently, from different sources (passA, passB),
-then rebuild. Disagreements show up in `contest_final.agreement` and in `midterms status`.
+`src/elections/sources/manual.py`. Collect each contest twice, independently, from different sources (passA, passB),
+then rebuild. Disagreements show up in `contest_final.agreement` and in `elections status`.
 
 ### Positions
 
@@ -101,14 +101,14 @@ newer exists.
 ## Layout
 
 ```
-src/midterms/      seats, models, schema, db, fetch, reconcile, cli, sources/{medsl,manual}
+src/elections/      seats, models, schema, db, fetch, reconcile, cli, sources/{medsl,manual}
 data/manual/       reviewed collections (committed)
 data/export/positions/ one JSON per cycle: per candidate and indicator, the final value with evidence, each pass,
                    the re-checks and any ruling (committed)
 data/export/       one JSON per seat with its full history, plus president.json (committed)
 data/raw/          MIT's source files and Dataverse metadata, with download records (committed)
 data/export/house/ one JSON per state, House results by district (committed)
-data/midterms.sqlite   the database (ignored; rebuilt by `midterms build`)
+data/elections.sqlite   the database (ignored; rebuilt by `elections build`)
 legacy/first-analysis/ the original 16-race page, its scripts and data
 scripts/convert_session_data.py  how data/manual was produced from that analysis
 ```

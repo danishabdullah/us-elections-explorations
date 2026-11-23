@@ -22,7 +22,7 @@ from urllib.robotparser import RobotFileParser
 
 import httpx
 
-USER_AGENT = "midterms-2026-research/0.1 (public election data; non-commercial)"
+USER_AGENT = "us-elections-explorations/0.1 (public election data; non-commercial)"
 BLOCK_STATUSES = {401, 403, 405, 407, 429, 451}
 BOT_CHECK_MARKERS = (b"captcha", b"cf-chl", b"challenge-platform", b"are you a robot", b"verify you are human")
 

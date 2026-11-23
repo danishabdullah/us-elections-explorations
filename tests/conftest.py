@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from midterms import db
-from midterms.sources import medsl
+from elections import db
+from elections.sources import medsl
 
 ROOT = Path(__file__).resolve().parent.parent
 FIXTURES = Path(__file__).resolve().parent / "fixtures"

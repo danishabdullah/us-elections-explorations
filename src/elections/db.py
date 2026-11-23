@@ -1,4 +1,4 @@
-"""SQLite storage. A build artifact: `midterms build` recreates it from cached sources and data/manual."""
+"""SQLite storage. A build artifact: `elections build` recreates it from cached sources and data/manual."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from collections.abc import Iterable
 from importlib.resources import files
 from pathlib import Path
 
-from midterms.models import Contest, ResultRow, Source, Total
-from midterms.seats import seats
+from elections.models import Contest, ResultRow, Source, Total
+from elections.seats import seats
 
 SCHEMA_VERSION = 1
 
@@ -23,7 +23,7 @@ def connect(path: Path | str) -> sqlite3.Connection:
 
 
 def init(con: sqlite3.Connection) -> None:
-    con.executescript(files("midterms").joinpath("schema.sql").read_text())
+    con.executescript(files("elections").joinpath("schema.sql").read_text())
     con.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
     con.executemany(
         "INSERT OR IGNORE INTO seats (seat_id, state, senate_class) VALUES (?, ?, ?)",

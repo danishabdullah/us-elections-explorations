@@ -1,6 +1,6 @@
 import pytest
 
-from midterms.seats import class_for_contest, regular_class, seat_for, seats, seats_up
+from elections.seats import class_for_contest, regular_class, seat_for, seats, seats_up
 
 
 def test_hundred_seats_two_per_state():

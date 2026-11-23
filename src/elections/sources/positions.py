@@ -18,9 +18,9 @@ import csv
 import sqlite3
 from pathlib import Path
 
-from midterms import db
-from midterms.models import Source
-from midterms.seats import seats_up
+from elections import db
+from elections.models import Source
+from elections.seats import seats_up
 
 
 def _read(path: Path) -> list[dict[str, str]]:

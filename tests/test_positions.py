@@ -1,6 +1,6 @@
 import csv
 
-from midterms.sources import positions
+from elections.sources import positions
 
 
 def write(path, rows):

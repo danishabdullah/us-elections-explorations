@@ -1,4 +1,4 @@
-"""Command line: `uv run midterms --help`."""
+"""Command line: `uv run elections --help`."""
 
 from __future__ import annotations
 
@@ -9,14 +9,14 @@ from typing import Annotated
 
 import typer
 
-from midterms import db, reconcile
-from midterms.fetch import Blocked, Fetcher
-from midterms.seats import STATES, seats, seats_up
-from midterms.sources import manual, medsl, positions
+from elections import db, reconcile
+from elections.fetch import Blocked, Fetcher
+from elections.seats import STATES, seats, seats_up
+from elections.sources import manual, medsl, positions
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "data"
-DB_PATH = DATA / "midterms.sqlite"
+DB_PATH = DATA / "elections.sqlite"
 OVERRIDES = DATA / "special_seats.json"
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
@@ -49,7 +49,7 @@ def fetch(
 
 @app.command()
 def build(refresh: Annotated[bool, typer.Option(help="Re-download MEDSL files")] = False) -> None:
-    """Rebuild data/midterms.sqlite from MEDSL and data/manual, reconcile, and export JSON."""
+    """Rebuild data/elections.sqlite from MEDSL and data/manual, reconcile, and export JSON."""
     DB_PATH.unlink(missing_ok=True)
     con = db.connect(DB_PATH)
     db.init(con)

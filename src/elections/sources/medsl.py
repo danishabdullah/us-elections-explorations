@@ -25,10 +25,10 @@ from pathlib import Path
 
 import httpx
 
-from midterms import db
-from midterms.fetch import Blocked, Fetcher
-from midterms.models import Contest, ResultRow, Source, Total
-from midterms.seats import seat_for
+from elections import db
+from elections.fetch import Blocked, Fetcher
+from elections.models import Contest, ResultRow, Source, Total
+from elections.seats import seat_for
 
 DATAVERSE = "https://dataverse.harvard.edu"
 COLLECTION = "medsl"

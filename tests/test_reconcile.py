@@ -1,7 +1,7 @@
 import csv
 
-from midterms import reconcile
-from midterms.sources import manual
+from elections import reconcile
+from elections.sources import manual
 
 
 def write_pass(path, rows):

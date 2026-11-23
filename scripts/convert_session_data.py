@@ -11,7 +11,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from midterms.sources.manual import COLUMNS
+from elections.sources.manual import COLUMNS
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "data" / "manual"

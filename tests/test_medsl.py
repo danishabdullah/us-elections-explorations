@@ -1,7 +1,7 @@
 import pytest
 
-from midterms import reconcile
-from midterms.sources import medsl
+from elections import reconcile
+from elections.sources import medsl
 from tests.conftest import FIXTURES
 
 SAMPLE = FIXTURES / "medsl_senate_sample.csv"
@@ -60,7 +60,7 @@ def test_unresolvable_special_refuses_to_load(fixes):
 
 
 def test_load_and_reconcile_single_source(con, overrides, fixes, tmp_path):
-    from midterms.models import Source
+    from elections.models import Source
 
     src = Source(source_id="src", kind="dataset", publisher="MEDSL", title="sample")
     medsl.load(con, SAMPLE, "senate", src, overrides, fixes)

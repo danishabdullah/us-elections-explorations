@@ -3,7 +3,7 @@ import hashlib
 import httpx
 import pytest
 
-from midterms.fetch import Blocked, Fetcher
+from elections.fetch import Blocked, Fetcher
 
 
 def fetcher(tmp_path, handler, robots="User-agent: *\nAllow: /\n"):

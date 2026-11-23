@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from midterms.seats import STATES
+from elections.seats import STATES
 
 Office = Literal["sen", "pres", "house", "gov"]
 Stage = Literal["gen", "runoff", "pri"]

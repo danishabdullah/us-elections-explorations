@@ -4,9 +4,9 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-# Rebuilt in seconds by `midterms build` from data/raw and data/manual, both committed.
-data/midterms.sqlite
-data/midterms.sqlite-*
+# Rebuilt in seconds by `elections build` from data/raw and data/manual, both committed.
+data/elections.sqlite
+data/elections.sqlite-*
 # Downloads stored under a hash of their URL are scratch; named source files in data/raw are committed.
 data/raw/**/*.bin
 data/raw/**/[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f].json
